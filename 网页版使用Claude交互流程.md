@@ -1,6 +1,6 @@
 好的，让我来用一张完整的流程图配合详细解释，带你了解从输入问题到收到回复的全链路过程。下面按层次逐一说明整个过程：
 
-![Uploading image.png…]()
+<img width="1440" height="1948" alt="image" src="https://github.com/user-attachments/assets/5350d58c-483b-4930-a838-163f87e789bd" />
 
 ---
 
