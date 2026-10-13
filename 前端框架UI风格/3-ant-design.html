@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ant Design 风格 Demo</title>
+<style>
+:root{--p:#1677ff;--ph:#4096ff;--pa:#0958d9;--er:#ff4d4f;--ok:#52c41a;--wa:#faad14;--tx:rgba(0,0,0,.88);--tx2:rgba(0,0,0,.65);--tx3:rgba(0,0,0,.45);--bd:#d9d9d9;--sp:#f0f0f0}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;display:flex;font:14px/1.5714 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--tx);background:#f5f5f5}
+/* Layout */
+.sider{width:200px;flex:none;background:#001529;color:rgba(255,255,255,.65)}
+.logo{height:64px;display:flex;align-items:center;gap:10px;padding:0 24px;color:#fff;font-size:18px;font-weight:600}
+.logo i{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#1677ff,#69b1ff)}
+.menu{padding:4px}
+.menu a{display:flex;align-items:center;gap:10px;height:40px;margin:4px;padding:0 16px;border-radius:8px;cursor:pointer;transition:.2s}
+.menu a:hover{color:#fff}
+.menu a.on{color:#fff;background:var(--p)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.hd{height:64px;flex:none;background:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 var(--sp)}
+.hd .r{display:flex;align-items:center;gap:16px}
+.badge{position:relative}.badge::after{content:"5";position:absolute;top:-8px;right:-10px;min-width:20px;height:20px;border-radius:10px;background:var(--er);color:#fff;font-size:12px;line-height:20px;text-align:center;box-shadow:0 0 0 1px #fff}
+.av{width:32px;height:32px;border-radius:50%;background:#87d068;color:#fff;display:grid;place-items:center}
+.ct{flex:1;overflow:auto;padding:24px}
+.bc{margin-bottom:16px;color:var(--tx3)}.bc b{color:var(--tx);font-weight:400}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:16px}
+.card{background:#fff;border-radius:8px;margin-bottom:16px}
+.card-h{padding:16px 24px;min-height:56px;font-size:16px;font-weight:600;border-bottom:1px solid var(--sp);display:flex;align-items:center;justify-content:space-between}
+.card-b{padding:24px}
+.stat small{display:block;color:var(--tx3);font-size:14px}.stat strong{font-size:24px;font-weight:400;color:var(--tx)}.stat em{font-style:normal;font-size:14px;margin-left:8px}
+/* Button */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:4px 15px;font:inherit;color:var(--tx);background:#fff;border:1px solid var(--bd);border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,.02);cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn:hover{color:var(--ph);border-color:var(--ph)}
+.btn:active{color:var(--pa);border-color:var(--pa)}
+.btn.primary{color:#fff;background:var(--p);border-color:var(--p);box-shadow:0 2px 0 rgba(5,145,255,.1)}
+.btn.primary:hover{background:var(--ph);border-color:var(--ph);color:#fff}
+.btn.primary:active{background:var(--pa)}
+.btn.dashed{border-style:dashed}
+.btn.text,.btn.link{border-color:transparent;background:none;box-shadow:none}
+.btn.text:hover{background:rgba(0,0,0,.06);color:var(--tx)}
+.btn.link{color:var(--p);padding:0;height:auto}.btn.link:hover{color:var(--ph);border-color:transparent}
+.btn.dg{color:var(--er);border-color:var(--er)}.btn.dg:hover{color:#ff7875;border-color:#ff7875}
+.btn.dg.link{border-color:transparent}
+.btn.dg.primary{color:#fff;background:var(--er)}.btn.dg.primary:hover{background:#ff7875;color:#fff}
+.btn.round{border-radius:32px;padding:4px 16px}
+.btn.lg{height:40px;padding:6.5px 15px;font-size:16px;border-radius:8px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+/* Input */
+.inp{height:32px;padding:4px 11px;font:inherit;color:var(--tx);background:#fff;border:1px solid var(--bd);border-radius:6px;outline:none;transition:all .2s;width:100%}
+.inp:hover{border-color:var(--ph)}
+.inp:focus{border-color:var(--p);box-shadow:0 0 0 2px rgba(5,145,255,.1)}
+.fi{margin-bottom:24px}.fi label{display:block;margin-bottom:8px}.fi label::before{content:"*";color:var(--er);margin-right:4px}
+/* Tag */
+.tag{display:inline-block;height:22px;padding:0 7px;font-size:12px;line-height:20px;border:1px solid var(--bd);border-radius:4px;background:#fafafa;color:var(--tx)}
+.tag.ok{color:#52c41a;background:#f6ffed;border-color:#b7eb8f}
+.tag.pr{color:var(--p);background:#e6f4ff;border-color:#91caff}
+.tag.wa{color:#d48806;background:#fffbe6;border-color:#ffe58f}
+.tag.er{color:var(--er);background:#fff2f0;border-color:#ffccc7}
+/* Switch */
+.sw{position:relative;display:inline-block;min-width:44px;height:22px;vertical-align:middle}
+.sw input{display:none}
+.sw i{position:absolute;inset:0;border-radius:11px;background:rgba(0,0,0,.25);cursor:pointer;transition:.2s}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,35,11,.2);transition:.2s}
+.sw input:checked+i{background:var(--p)}.sw input:checked+i::after{left:calc(100% - 20px)}
+/* Table */
+table{width:100%;border-collapse:separate;border-spacing:0}
+th{padding:16px;background:#fafafa;font-weight:600;text-align:left;border-bottom:1px solid var(--sp)}
+th:first-child{border-top-left-radius:8px}th:last-child{border-top-right-radius:8px}
+td{padding:16px;border-bottom:1px solid var(--sp);transition:background .2s}
+tbody tr:hover td{background:#fafafa}
+.pg{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;align-items:center}
+.pg span{min-width:32px;height:32px;line-height:30px;text-align:center;border:1px solid transparent;border-radius:6px;cursor:pointer}
+.pg span:hover{background:rgba(0,0,0,.06)}
+.pg span.on{border-color:var(--p);color:var(--p);background:#fff}
+.divider{width:1px;height:14px;background:rgba(5,5,5,.06);display:inline-block;margin:0 8px}
+/* Modal / message */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding-top:100px;z-index:10}
+.mask.show{display:flex}
+.modal{width:520px;max-width:92vw;background:#fff;border-radius:8px;padding:20px 24px;box-shadow:0 6px 16px 0 rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12),0 9px 28px 8px rgba(0,0,0,.05);animation:zoom .25s}
+@keyframes zoom{from{opacity:0;transform:scale(.85)}}
+.modal h3{margin:0 0 16px;font-size:16px;font-weight:600}
+.modal .ft{margin-top:12px;text-align:right;display:flex;justify-content:flex-end;gap:8px}
+#msgs{position:fixed;top:16px;left:0;right:0;z-index:20;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.msg{padding:9px 12px;border-radius:8px;background:#fff;box-shadow:0 6px 16px 0 rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12),0 9px 28px 8px rgba(0,0,0,.05);display:flex;align-items:center;gap:8px;animation:down .3s}
+@keyframes down{from{opacity:0;transform:translateY(-100%)}}
+.msg b{width:16px;height:16px;border-radius:50%;color:#fff;font-size:11px;display:grid;place-items:center;background:var(--p)}
+.msg.ok b{background:var(--ok)}.msg.wa b{background:var(--wa)}.msg.er b{background:var(--er)}
+</style>
+</head>
+<body>
+<div class="sider">
+  <div class="logo"><i></i>Ant Admin</div>
+  <div class="menu"><a>📈 数据看板</a><a class="on">🧾 订单管理</a><a>👤 客户管理</a><a>📦 商品管理</a><a>⚙️ 系统设置</a></div>
+</div>
+<div class="main">
+  <div class="hd"><b style="font-size:16px">订单管理</b>
+    <div class="r"><span class="badge">🔔</span><div class="av">王</div></div></div>
+  <div class="ct">
+    <div class="bc">首页 / 订单中心 / <b>订单管理</b></div>
+
+    <div class="grid4">
+      <div class="card card-b stat" style="margin:0"><small>今日订单</small><strong>128</strong><em style="color:var(--ok)">▲ 12%</em></div>
+      <div class="card card-b stat" style="margin:0"><small>今日销售额</small><strong>¥ 38,642</strong><em style="color:var(--er)">▼ 3%</em></div>
+      <div class="card card-b stat" style="margin:0"><small>待发货</small><strong>23</strong></div>
+      <div class="card card-b stat" style="margin:0"><small>退款申请</small><strong>4</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">按钮与表单控件</div>
+      <div class="card-b">
+        <div class="row" style="margin-bottom:16px">
+          <button class="btn primary" onclick="msg('Primary 点击','')">Primary</button><button class="btn">Default</button><button class="btn dashed">Dashed</button>
+          <button class="btn text">Text</button><button class="btn link">Link</button><button class="btn dg">Danger</button><button class="btn dg primary">Danger Primary</button>
+          <button class="btn primary round">Round</button><button class="btn primary lg">Large</button>
+        </div>
+        <div class="row">启用库存预警 <label class="sw"><input type="checkbox" checked onchange="msg(this.checked?'库存预警已开启':'库存预警已关闭',this.checked?'ok':'')"><i></i></label></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">订单列表 <button class="btn primary" onclick="openM()">＋ 新建订单</button></div>
+      <div class="card-b">
+        <div class="row" style="margin-bottom:16px">
+          <input class="inp" id="kw" style="width:240px" placeholder="搜索客户名称" oninput="render()">
+          <button class="btn primary" onclick="render();msg('查询成功','ok')">🔍 查询</button>
+          <button class="btn" onclick="kw.value='';render()">重置</button>
+        </div>
+        <table>
+          <thead><tr><th>订单号</th><th>客户</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+        <div class="pg"><span>共 <span id="cnt" style="padding:0;min-width:0"></span> 条</span><span>‹</span><span class="on">1</span><span>2</span><span>›</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mask" id="mk" onclick="if(event.target===this)closeM()">
+  <div class="modal">
+    <h3>新建订单</h3>
+    <div class="fi"><label>客户名称</label><input class="inp" id="f-c" placeholder="请输入客户名称"></div>
+    <div class="fi"><label>订单金额</label><input class="inp" id="f-a" type="number" placeholder="请输入金额"></div>
+    <div class="fi" style="margin:0"><label>订单状态</label><select class="inp" id="f-s"><option>待付款</option><option>处理中</option><option>已完成</option></select></div>
+    <div class="ft"><button class="btn" onclick="closeM()">取 消</button><button class="btn primary" onclick="add()">确 定</button></div>
+  </div>
+</div>
+<div id="msgs"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const cls={已完成:'ok',处理中:'pr',待付款:'wa',已取消:'er'};
+let rows=[['SO-20261001','瑞丰科技',12800,'已完成'],['SO-20261002','海港贸易',8450,'处理中'],['SO-20261003','南岭制造',23600,'待付款'],['SO-20261004','晨光电子',5980,'已取消'],['SO-20261005','云帆物流',17200,'已完成']];
+function render(){
+  const k=$('kw').value.trim(),list=rows.map((r,i)=>({r,i})).filter(o=>o.r[1].includes(k));
+  $('cnt').textContent=list.length;
+  $('tb').innerHTML=list.map(({r,i})=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>¥ ${r[2].toLocaleString()}</td><td><span class="tag ${cls[r[3]]}">${r[3]}</span></td>
+   <td><button class="btn link">编辑</button><span class="divider"></span><button class="btn link dg" onclick="del(${i})">删除</button></td></tr>`).join('')
+   ||'<tr><td colspan="5" style="text-align:center;color:rgba(0,0,0,.25);padding:40px">暂无数据</td></tr>';
+}
+function del(i){rows.splice(i,1);render();msg('删除成功','ok')}
+function openM(){$('mk').classList.add('show')}function closeM(){$('mk').classList.remove('show')}
+function add(){
+  const c=$('f-c').value.trim(),a=+$('f-a').value;if(!c||!a)return msg('请填写客户名称和金额','wa');
+  rows.unshift(['SO-'+(20261006+rows.length),c,a,$('f-s').value]);$('f-c').value=$('f-a').value='';closeM();render();msg('创建成功','ok');
+}
+function msg(t,type=''){
+  const e=document.createElement('div');e.className='msg '+type;e.innerHTML=`<b>${{ok:'✓',wa:'!',er:'✕'}[type]||'i'}</b>${t}`;
+  $('msgs').appendChild(e);setTimeout(()=>e.remove(),2500);
+}
+render();
+</script>
+</body>
+</html>
