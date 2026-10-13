@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Element UI 风格 Demo</title>
+<style>
+:root{--p:#409eff;--s:#67c23a;--w:#e6a23c;--d:#f56c6c;--i:#909399;--t1:#303133;--t2:#606266;--t3:#909399;--bd:#dcdfe6;--bd2:#ebeef5}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;display:flex;font:14px/1.5 "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;color:var(--t2);background:#f0f2f5}
+/* 侧边栏 */
+aside{width:210px;background:#304156;color:#bfcbd9;flex:none;overflow:auto}
+.logo{height:50px;line-height:50px;text-align:center;color:#fff;font-size:16px;font-weight:600;background:#2b3a4b}
+.menu a{display:flex;align-items:center;gap:10px;height:50px;padding:0 20px;color:#bfcbd9;text-decoration:none;cursor:pointer}
+.menu a:hover{background:#263445}
+.menu a.on{color:var(--p);background:#263445}
+/* 主区域 */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+header{height:50px;background:#fff;box-shadow:0 1px 4px rgba(0,21,41,.08);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex:none}
+.crumb span{color:var(--t3)}.crumb b{color:var(--t2);font-weight:400}
+.user{display:flex;align-items:center;gap:8px;cursor:pointer}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--p);color:#fff;display:grid;place-items:center;font-size:13px}
+.content{padding:20px;overflow:auto;flex:1}
+.card{background:#fff;border:1px solid var(--bd2);border-radius:4px;box-shadow:0 2px 12px 0 rgba(0,0,0,.1);margin-bottom:20px}
+.card-h{padding:18px 20px;border-bottom:1px solid var(--bd2);font-size:16px;color:var(--t1);display:flex;justify-content:space-between;align-items:center}
+.card-b{padding:20px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+/* 按钮 */
+.el-btn{--c:var(--p);display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;font:inherit;font-weight:500;line-height:1;color:var(--t2);background:#fff;border:1px solid var(--bd);border-radius:4px;cursor:pointer;transition:.1s;white-space:nowrap}
+.el-btn:hover{color:var(--p);background:#ecf5ff;border-color:#c6e2ff}
+.el-btn:active{color:#3a8ee6;border-color:#3a8ee6}
+.el-btn.primary,.el-btn.success,.el-btn.info,.el-btn.warning,.el-btn.danger{color:#fff;background:var(--c);border-color:var(--c)}
+.el-btn.primary:hover,.el-btn.success:hover,.el-btn.info:hover,.el-btn.warning:hover,.el-btn.danger:hover{filter:brightness(1.12);color:#fff;background:var(--c);border-color:var(--c)}
+.success{--c:var(--s)}.info{--c:var(--i)}.warning{--c:var(--w)}.danger{--c:var(--d)}
+.el-btn.plain.primary,.el-btn.plain.success,.el-btn.plain.info,.el-btn.plain.warning,.el-btn.plain.danger{color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff);border-color:color-mix(in srgb,var(--c) 40%,#fff)}
+.el-btn.plain.primary:hover,.el-btn.plain.success:hover,.el-btn.plain.info:hover,.el-btn.plain.warning:hover,.el-btn.plain.danger:hover{color:#fff;background:var(--c);border-color:var(--c);filter:none}
+.el-btn.round{border-radius:20px;padding:12px 23px}
+.el-btn.small{padding:9px 15px;font-size:12px}
+.el-btn.text{border:none;background:none;color:var(--p);padding:0}
+.el-btn.text:hover{background:none;color:#66b1ff}
+.el-btn.text.danger{color:var(--d)}
+/* 表单 */
+.el-input{height:40px;padding:0 15px;border:1px solid var(--bd);border-radius:4px;font:inherit;color:var(--t2);background:#fff;outline:none;transition:border-color .2s;width:100%}
+.el-input:hover{border-color:#c0c4cc}.el-input:focus{border-color:var(--p)}
+.field{display:flex;align-items:center;gap:10px}
+.field label{color:var(--t2);font-weight:700;white-space:nowrap}
+.field.w{width:240px}
+.form-item{margin-bottom:20px}
+.form-item label{display:block;margin-bottom:6px;font-weight:700}
+/* 开关 */
+.sw{position:relative;display:inline-block;width:40px;height:20px;vertical-align:middle}
+.sw input{display:none}
+.sw i{position:absolute;inset:0;border-radius:10px;background:var(--bd);cursor:pointer;transition:.3s}
+.sw i::after{content:"";position:absolute;top:1px;left:1px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.3s}
+.sw input:checked+i{background:var(--p)}.sw input:checked+i::after{transform:translateX(20px)}
+/* 标签 */
+.el-tag{--c:var(--p);display:inline-block;height:24px;padding:0 9px;line-height:22px;font-size:12px;border-radius:4px;color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff);border:1px solid color-mix(in srgb,var(--c) 20%,#fff)}
+/* 表格 */
+table{width:100%;border-collapse:collapse}
+th{padding:12px 10px;text-align:left;color:var(--t3);font-weight:500;border-bottom:1px solid var(--bd2);background:#fff}
+td{padding:12px 10px;border-bottom:1px solid var(--bd2);color:var(--t2)}
+tbody tr:nth-child(even){background:#fafafa}
+tbody tr:hover{background:#f5f7fa}
+.pager{display:flex;justify-content:flex-end;gap:5px;margin-top:20px}
+.pager span{min-width:30px;height:28px;line-height:28px;text-align:center;background:#f4f4f5;color:var(--t2);border-radius:2px;font-weight:700;cursor:pointer}
+.pager span.on{background:var(--p);color:#fff}
+/* 对话框 */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;justify-content:center;padding-top:15vh;z-index:10}
+.mask.show{display:flex}
+.dialog{width:480px;max-width:92vw;background:#fff;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.3);animation:pop .25s}
+@keyframes pop{from{opacity:0;transform:translateY(-20px)}}
+.dialog .h{padding:20px 20px 10px;font-size:18px;color:var(--t1)}
+.dialog .b{padding:30px 20px}
+.dialog .f{padding:10px 20px 20px;text-align:right}
+/* 消息提示 */
+#msgs{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:20;display:flex;flex-direction:column;gap:12px;align-items:center}
+.msg{min-width:380px;padding:15px 15px 15px 20px;border-radius:4px;border:1px solid #ebeef5;background:#edf2fc;color:var(--i);box-shadow:0 2px 12px rgba(0,0,0,.1);animation:pop .3s}
+.msg.success{background:#f0f9eb;border-color:#e1f3d8;color:var(--s)}
+.msg.warning{background:#fdf6ec;border-color:#faecd8;color:var(--w)}
+h4{margin:0 0 12px;font-weight:500;color:var(--t1)}
+</style>
+</head>
+<body>
+<aside>
+  <div class="logo">⚙ Element Admin</div>
+  <div class="menu">
+    <a>📊 首页概览</a><a class="on">🧾 订单管理</a><a>👥 客户管理</a><a>📦 库存管理</a><a>⚙ 系统设置</a>
+  </div>
+</aside>
+<div class="main">
+  <header>
+    <div class="crumb"><span>首页 / </span><b>订单管理</b></div>
+    <div class="user"><div class="avatar">管</div>管理员 ▾</div>
+  </header>
+  <div class="content">
+
+    <div class="card">
+      <div class="card-h">按钮 Button</div>
+      <div class="card-b">
+        <div class="row" style="margin-bottom:16px">
+          <button class="el-btn">默认按钮</button><button class="el-btn primary">主要按钮</button><button class="el-btn success">成功按钮</button>
+          <button class="el-btn info">信息按钮</button><button class="el-btn warning">警告按钮</button><button class="el-btn danger">危险按钮</button>
+        </div>
+        <div class="row" style="margin-bottom:16px">
+          <button class="el-btn plain primary">朴素按钮</button><button class="el-btn plain success">成功</button><button class="el-btn plain warning">警告</button><button class="el-btn plain danger">危险</button>
+          <button class="el-btn round primary">圆角按钮</button><button class="el-btn small">小型按钮</button>
+        </div>
+        <div class="row">
+          <span>启用自动对账</span><label class="sw"><input type="checkbox" checked onchange="toast(this.checked?'已开启自动对账':'已关闭自动对账',this.checked?'success':'')"><i></i></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">订单列表 <button class="el-btn primary small" onclick="openDlg()">＋ 新增订单</button></div>
+      <div class="card-b">
+        <div class="row" style="margin-bottom:20px">
+          <div class="field w"><label>客户</label><input class="el-input" id="kw" placeholder="请输入客户名称" oninput="render()"></div>
+          <button class="el-btn primary" onclick="render();toast('查询完成','success')">🔍 查询</button>
+          <button class="el-btn" onclick="kw.value='';render()">重置</button>
+        </div>
+        <table>
+          <thead><tr><th>订单号</th><th>客户</th><th>金额（元）</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+        <div class="pager"><span>‹</span><span class="on">1</span><span>2</span><span>3</span><span>›</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mask" id="dlg" onclick="if(event.target===this)closeDlg()">
+  <div class="dialog">
+    <div class="h">新增订单</div>
+    <div class="b">
+      <div class="form-item"><label>客户名称</label><input class="el-input" id="f-c" placeholder="请输入客户名称"></div>
+      <div class="form-item"><label>订单金额</label><input class="el-input" id="f-a" type="number" placeholder="请输入金额"></div>
+      <div class="form-item" style="margin:0"><label>订单状态</label>
+        <select class="el-input" id="f-s"><option>待付款</option><option>处理中</option><option>已完成</option></select></div>
+    </div>
+    <div class="f"><button class="el-btn" onclick="closeDlg()">取 消</button> <button class="el-btn primary" onclick="add()">确 定</button></div>
+  </div>
+</div>
+<div id="msgs"></div>
+
+<script>
+const color={已完成:'--s',处理中:'--p',待付款:'--w',已取消:'--i'};
+let rows=[['SO-20261001','瑞丰科技','12,800','已完成'],['SO-20261002','海港贸易','8,450','处理中'],['SO-20261003','南岭制造','23,600','待付款'],['SO-20261004','晨光电子','5,980','已取消'],['SO-20261005','云帆物流','17,200','已完成']];
+const $=id=>document.getElementById(id);
+function render(){
+  const k=$('kw').value.trim();
+  $('tb').innerHTML=rows.map((r,i)=>({r,i})).filter(o=>o.r[1].includes(k)).map(({r,i})=>
+    `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><span class="el-tag" style="--c:var(${color[r[3]]})">${r[3]}</span></td>
+    <td><button class="el-btn text">编辑</button>&nbsp;&nbsp;<button class="el-btn text danger" onclick="del(${i})">删除</button></td></tr>`).join('')
+    ||'<tr><td colspan="5" style="text-align:center;color:#909399;padding:30px">暂无数据</td></tr>';
+}
+function del(i){rows.splice(i,1);render();toast('删除成功','success')}
+function openDlg(){$('dlg').classList.add('show')}
+function closeDlg(){$('dlg').classList.remove('show')}
+function add(){
+  const c=$('f-c').value.trim(),a=$('f-a').value;
+  if(!c||!a)return toast('请填写完整信息','warning');
+  rows.unshift(['SO-'+(20261000+rows.length+6),c,Number(a).toLocaleString(),$('f-s').value]);
+  $('f-c').value=$('f-a').value='';closeDlg();render();toast('新增成功','success');
+}
+function toast(t,type=''){
+  const e=document.createElement('div');e.className='msg '+type;e.textContent=({success:'✔ ',warning:'⚠ '}[type]||'ℹ ')+t;
+  $('msgs').appendChild(e);setTimeout(()=>e.remove(),2500);
+}
+render();
+</script>
+</body>
+</html>
