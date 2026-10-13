@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bootstrap 风格 Demo</title>
+<style>
+:root{--p:#0d6efd;--sec:#6c757d;--ok:#198754;--dg:#dc3545;--wa:#ffc107;--in:#0dcaf0;--lt:#f8f9fa;--dk:#212529;--bd:#dee2e6;--r:.375rem}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font:400 1rem/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans","PingFang SC","Microsoft YaHei",sans-serif;color:var(--dk);background:#fff}
+.container{max-width:1140px;margin:0 auto;padding:0 12px}
+h1,h2,h3,h5{margin:0 0 .5rem;font-weight:500;line-height:1.2}
+h2{font-size:2rem}h3{font-size:1.75rem}h5{font-size:1.25rem}
+.text-muted{color:#6c757d}
+/* Navbar */
+.navbar{background:var(--dk);padding:.5rem 0}
+.navbar .container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.brand{color:#fff;font-size:1.25rem;text-decoration:none;margin-right:1rem}
+.nav{display:flex;gap:.25rem;flex:1}
+.nav a{padding:.5rem;color:rgba(255,255,255,.55);text-decoration:none}
+.nav a:hover{color:rgba(255,255,255,.75)}.nav a.on{color:#fff}
+/* Button */
+.btn{--c:var(--p);--h:#0b5ed7;display:inline-block;padding:.375rem .75rem;font:inherit;line-height:1.5;text-align:center;color:#fff;background:var(--c);border:1px solid var(--c);border-radius:var(--r);cursor:pointer;transition:color .15s,background-color .15s,border-color .15s,box-shadow .15s;text-decoration:none;vertical-align:middle}
+.btn:hover{background:var(--h);border-color:var(--h);color:#fff}
+.btn:focus-visible{outline:0;box-shadow:0 0 0 .25rem color-mix(in srgb,var(--c) 50%,transparent)}
+.btn-secondary{--c:var(--sec);--h:#5c636a}.btn-success{--c:var(--ok);--h:#157347}.btn-danger{--c:var(--dg);--h:#bb2d3b}
+.btn-warning{--c:var(--wa);--h:#ffca2c;color:#000}.btn-warning:hover{color:#000}.btn-info{--c:var(--in);--h:#31d2f2;color:#000}.btn-info:hover{color:#000}
+.btn-light{--c:var(--lt);--h:#d3d4d5;color:#000;border-color:var(--lt)}.btn-light:hover{color:#000}
+.btn-dark{--c:var(--dk);--h:#424649}
+.btn-outline{color:var(--c);background:transparent}
+.btn-outline:hover{color:#fff;background:var(--c);border-color:var(--c)}
+.btn-outline.btn-warning:hover,.btn-outline.btn-info:hover{color:#000}
+.btn-sm{padding:.25rem .5rem;font-size:.875rem;border-radius:.25rem}
+.btn-lg{padding:.5rem 1rem;font-size:1.25rem;border-radius:.5rem}
+.btn-link{color:var(--p);background:none;border-color:transparent;text-decoration:underline}.btn-link:hover{color:#0a58ca;background:none;border-color:transparent}
+.g{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+/* Card */
+.card{background:#fff;border:1px solid rgba(0,0,0,.175);border-radius:var(--r);overflow:hidden;margin-bottom:1rem}
+.card-header{padding:.5rem 1rem;background:rgba(33,37,41,.03);border-bottom:1px solid rgba(0,0,0,.175);display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:1rem}
+.row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1rem}
+.row3 .card{margin:0}
+/* Hero */
+.hero{padding:3rem 1.5rem;margin:1.5rem 0;background:var(--lt);border-radius:.5rem}
+.hero h1{font-size:2.5rem;font-weight:300}.hero p{font-size:1.25rem;font-weight:300;color:#495057;margin:0 0 1rem}
+/* Alert */
+.alert{position:relative;padding:1rem 3rem 1rem 1rem;margin-bottom:1rem;border:1px solid;border-radius:var(--r);color:#084298;background:#cfe2ff;border-color:#b6d4fe}
+.alert.s{color:#0a3622;background:#d1e7dd;border-color:#a3cfbb}
+.alert .x{position:absolute;top:0;right:0;padding:1.25rem 1rem;background:none;border:0;opacity:.5;cursor:pointer;font-size:1rem;line-height:1}
+.alert .x:hover{opacity:.8}
+/* Form */
+.form-label{display:block;margin-bottom:.5rem}
+.form-control,.form-select{display:block;width:100%;padding:.375rem .75rem;font:inherit;color:var(--dk);background:#fff;border:1px solid #ced4da;border-radius:var(--r);transition:border-color .15s,box-shadow .15s;appearance:auto}
+.form-control:focus,.form-select:focus{color:var(--dk);border-color:#86b7fe;outline:0;box-shadow:0 0 0 .25rem rgba(13,110,253,.25)}
+.mb3{margin-bottom:1rem}
+.form-switch{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer}
+.form-switch input{appearance:none;width:2em;height:1em;margin:0;border:1px solid rgba(0,0,0,.25);border-radius:2em;background:#fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280,0,0,0.25%29'/%3e%3c/svg%3e") left center/contain no-repeat;transition:background-position .15s ease-in-out;cursor:pointer}
+.form-switch input:checked{background-color:var(--p);border-color:var(--p);background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");background-position:right center}
+.form-switch input:focus{outline:0;box-shadow:0 0 0 .25rem rgba(13,110,253,.25)}
+.input-group{display:flex}.input-group .form-control{border-radius:var(--r) 0 0 var(--r)}.input-group .btn{border-radius:0 var(--r) var(--r) 0}
+/* Table & Badge */
+.table{width:100%;border-collapse:collapse;margin-bottom:0}
+.table th,.table td{padding:.5rem;border-bottom:1px solid var(--bd);text-align:left;vertical-align:middle}
+.table thead th{border-bottom:2px solid #212529}
+.table-striped tbody tr:nth-child(odd){background:rgba(0,0,0,.05)}
+.table-hover tbody tr:hover{background:rgba(0,0,0,.075)}
+.badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;line-height:1;color:#fff;text-align:center;white-space:nowrap;border-radius:var(--r)}
+.pill{border-radius:50rem}
+.b-ok{background:var(--ok)}.b-p{background:var(--p)}.b-wa{background:var(--wa);color:#000}.b-sec{background:var(--sec)}
+.progress{height:1rem;background:#e9ecef;border-radius:var(--r);overflow:hidden}
+.progress div{height:100%;background:var(--p);color:#fff;font-size:.75rem;text-align:center;transition:width .6s ease}
+.pagination{display:flex;gap:0;list-style:none;padding:0;margin:1rem 0 0}
+.pagination a{padding:.375rem .75rem;border:1px solid var(--bd);margin-left:-1px;color:var(--p);text-decoration:none;background:#fff;cursor:pointer}
+.pagination a:first-child{border-radius:var(--r) 0 0 var(--r);margin-left:0}.pagination a:last-child{border-radius:0 var(--r) var(--r) 0}
+.pagination a:hover{background:#e9ecef}.pagination a.on{background:var(--p);border-color:var(--p);color:#fff}
+/* Modal */
+.modal-bk{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.5);display:none;padding:1.75rem .5rem;overflow:auto}
+.modal-bk.show{display:block}
+.modal-box{max-width:500px;margin:0 auto;background:#fff;border:1px solid rgba(0,0,0,.175);border-radius:.5rem;animation:slide .3s ease-out}
+@keyframes slide{from{opacity:0;transform:translateY(-50px)}}
+.modal-h{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--bd)}
+.modal-h h5{margin:0}.modal-h button{background:none;border:0;font-size:1.25rem;opacity:.5;cursor:pointer}
+.modal-b{padding:1rem}.modal-f{padding:.75rem;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:.5rem}
+footer{margin:3rem 0 2rem;padding-top:1rem;border-top:1px solid var(--bd);color:#6c757d;text-align:center}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="container">
+    <a class="brand">Bootstrap 订单台</a>
+    <div class="nav"><a class="on">概览</a><a>订单</a><a>客户</a><a>设置</a></div>
+    <div class="g"><button class="btn btn-outline btn-light btn-sm" style="--c:#fff">登录</button><button class="btn btn-primary btn-sm">注册</button></div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>订单管理系统</h1>
+    <p>响应式布局、清晰的栅格与熟悉的默认样式，一眼就能认出的 Bootstrap。</p>
+    <button class="btn btn-primary btn-lg" onclick="openM()">新建订单</button>
+    <button class="btn btn-outline btn-secondary btn-lg" style="--c:var(--sec)">了解更多</button>
+  </div>
+
+  <div class="alert" id="al">💡 <b>提示：</b>系统将于本周日凌晨 2:00 进行维护。<button class="x" onclick="al.remove()">✕</button></div>
+
+  <div class="row3">
+    <div class="card"><div class="card-body"><h5>订单完成率</h5>
+      <p class="text-muted" style="margin-top:0">本月目标 90%</p>
+      <div class="progress"><div id="pb" style="width:72%">72%</div></div>
+      <div class="g" style="margin-top:12px"><button class="btn btn-sm btn-outline btn-secondary" onclick="pg(-8)">−</button><button class="btn btn-sm btn-outline btn-primary" onclick="pg(8)">＋</button></div></div></div>
+    <div class="card"><div class="card-header">通知设置</div><div class="card-body">
+      <div class="mb3"><label class="form-switch"><input type="checkbox" checked>邮件通知</label></div>
+      <label class="form-switch"><input type="checkbox">短信通知</label></div></div>
+    <div class="card"><div class="card-body"><h5>按钮</h5>
+      <div class="g"><button class="btn btn-success btn-sm">成功</button><button class="btn btn-danger btn-sm">危险</button><button class="btn btn-warning btn-sm">警告</button><button class="btn btn-info btn-sm">信息</button><button class="btn btn-dark btn-sm">深色</button><button class="btn btn-link btn-sm">链接</button></div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><b>订单列表</b>
+      <div class="input-group" style="width:260px"><input class="form-control" id="kw" placeholder="搜索客户" oninput="render()"><button class="btn btn-primary">搜索</button></div></div>
+    <div class="card-body" style="overflow:auto">
+      <table class="table table-striped table-hover">
+        <thead><tr><th>#</th><th>订单号</th><th>客户</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+      <ul class="pagination"><a>上一页</a><a class="on">1</a><a>2</a><a>3</a><a>下一页</a></ul>
+    </div>
+  </div>
+  <footer>© 2026 Bootstrap 风格演示 · 单文件 HTML</footer>
+</div>
+
+<div class="modal-bk" id="mk" onclick="if(event.target===this)closeM()">
+  <div class="modal-box">
+    <div class="modal-h"><h5>新建订单</h5><button onclick="closeM()">✕</button></div>
+    <div class="modal-b">
+      <div class="mb3"><label class="form-label">客户名称</label><input class="form-control" id="f-c" placeholder="请输入客户名称"></div>
+      <div class="mb3"><label class="form-label">订单金额</label><input class="form-control" id="f-a" type="number" placeholder="0.00"></div>
+      <div><label class="form-label">状态</label><select class="form-select" id="f-s"><option>待付款</option><option>处理中</option><option>已完成</option></select></div>
+    </div>
+    <div class="modal-f"><button class="btn btn-secondary" onclick="closeM()">关闭</button><button class="btn btn-primary" onclick="add()">保存</button></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const cls={已完成:'b-ok',处理中:'b-p',待付款:'b-wa',已取消:'b-sec'};
+let rows=[['SO-20261001','瑞丰科技',12800,'已完成'],['SO-20261002','海港贸易',8450,'处理中'],['SO-20261003','南岭制造',23600,'待付款'],['SO-20261004','晨光电子',5980,'已取消'],['SO-20261005','云帆物流',17200,'已完成']];
+function render(){
+  const k=$('kw').value.trim();
+  $('tb').innerHTML=rows.map((r,i)=>({r,i})).filter(o=>o.r[1].includes(k)).map(({r,i},n)=>
+   `<tr><td>${n+1}</td><td>${r[0]}</td><td>${r[1]}</td><td>¥${r[2].toLocaleString()}</td><td><span class="badge pill ${cls[r[3]]}">${r[3]}</span></td>
+    <td><button class="btn btn-sm btn-outline btn-primary">编辑</button> <button class="btn btn-sm btn-outline btn-danger" onclick="rows.splice(${i},1);render()">删除</button></td></tr>`).join('')
+   ||'<tr><td colspan="6" class="text-muted" style="text-align:center;padding:2rem">没有匹配的订单</td></tr>';
+}
+function openM(){$('mk').classList.add('show')}function closeM(){$('mk').classList.remove('show')}
+function add(){
+  const c=$('f-c').value.trim(),a=+$('f-a').value;if(!c||!a)return alert('请填写客户名称和金额');
+  rows.unshift(['SO-'+(20261006+rows.length),c,a,$('f-s').value]);$('f-c').value=$('f-a').value='';closeM();render();
+}
+let v=72;function pg(d){v=Math.max(0,Math.min(100,v+d));$('pb').style.width=v+'%';$('pb').textContent=v+'%'}
+render();
+</script>
+</body>
+</html>
