@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>shadcn/ui 风格 Demo</title>
+<style>
+:root{--bg:#fff;--fg:#09090b;--card:#fff;--mut:#f4f4f5;--mutfg:#71717a;--bd:#e4e4e7;--pr:#18181b;--prfg:#fafafa;--sec:#f4f4f5;--acc:#f4f4f5;--dg:#ef4444;--ring:#18181b;--r:.5rem}
+[data-theme=dark]{--bg:#09090b;--fg:#fafafa;--card:#09090b;--mut:#27272a;--mutfg:#a1a1aa;--bd:#27272a;--pr:#fafafa;--prfg:#18181b;--sec:#27272a;--acc:#27272a;--dg:#7f1d1d;--ring:#d4d4d8}
+*{box-sizing:border-box;border-color:var(--bd)}
+body{margin:0;min-height:100vh;font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--fg);background:var(--bg);transition:background .2s,color .2s;-webkit-font-smoothing:antialiased}
+.top{display:flex;align-items:center;gap:24px;height:56px;padding:0 24px;border-bottom:1px solid var(--bd)}
+.top b{font-weight:600;font-size:15px}
+.top nav{display:flex;gap:20px;flex:1;color:var(--mutfg);font-weight:500}
+.top nav a{cursor:pointer;transition:color .15s}.top nav a:hover,.top nav a.on{color:var(--fg)}
+.wrap{max-width:1040px;margin:0 auto;padding:32px 24px}
+h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.025em}
+.sub{color:var(--mutfg);margin:4px 0 24px}
+/* Button */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;font:500 14px/1 inherit;font-family:inherit;border:1px solid transparent;border-radius:calc(var(--r) - 2px);background:var(--pr);color:var(--prfg);cursor:pointer;white-space:nowrap;transition:background .15s,opacity .15s;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.btn:hover{opacity:.9}
+.btn:focus-visible{outline:0;box-shadow:0 0 0 1px var(--ring)}
+.btn.sec{background:var(--sec);color:var(--fg)}.btn.sec:hover{opacity:1;background:color-mix(in srgb,var(--sec) 80%,var(--fg) 8%)}
+.btn.out{background:var(--bg);color:var(--fg);border-color:var(--bd)}.btn.out:hover{opacity:1;background:var(--acc)}
+.btn.gh{background:none;color:var(--fg);box-shadow:none}.btn.gh:hover{opacity:1;background:var(--acc)}
+.btn.dg{background:var(--dg);color:#fff}
+.btn.sm{height:32px;padding:0 12px;font-size:12px}
+.btn.ic{width:36px;padding:0}
+.g{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+/* Card */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:calc(var(--r) + 4px);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.ch{padding:24px 24px 0}.ch h3{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}.ch p{margin:4px 0 0;color:var(--mutfg)}
+.cb{padding:24px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:16px}
+.stats .cb{padding:20px 24px}.stats small{color:var(--mutfg);font-weight:500}.stats .n{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-top:6px}.stats .d{font-size:12px;color:var(--mutfg)}
+/* Input / Label */
+.in{width:100%;height:36px;padding:4px 12px;font:inherit;color:var(--fg);background:transparent;border:1px solid var(--bd);border-radius:calc(var(--r) - 2px);box-shadow:0 1px 2px rgba(0,0,0,.05);outline:none;transition:box-shadow .15s}
+.in::placeholder{color:var(--mutfg)}
+.in:focus-visible{box-shadow:0 0 0 1px var(--ring)}
+select.in{background:var(--bg)}
+.lb{display:block;margin-bottom:8px;font-weight:500;line-height:1}
+.fld{margin-bottom:16px}
+/* Badge */
+.bdg{display:inline-flex;align-items:center;padding:2px 10px;font-size:12px;font-weight:600;border-radius:calc(var(--r) - 2px);border:1px solid transparent;background:var(--pr);color:var(--prfg)}
+.bdg.sec{background:var(--sec);color:var(--fg)}.bdg.out{background:none;color:var(--fg);border-color:var(--bd)}.bdg.dg{background:var(--dg);color:#fff}
+/* Switch */
+.sw{display:inline-block;position:relative;width:36px;height:20px;vertical-align:middle}
+.sw input{display:none}
+.sw i{position:absolute;inset:0;border-radius:10px;background:var(--bd);cursor:pointer;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--bg);box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .15s}
+.sw input:checked+i{background:var(--pr)}.sw input:checked+i::after{transform:translateX(16px)}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0}
+.srow+.srow{border-top:1px solid var(--bd)}.srow p{margin:0;color:var(--mutfg);font-size:13px}
+/* Tabs */
+.tl{display:inline-flex;height:36px;padding:4px;border-radius:calc(var(--r));background:var(--mut);color:var(--mutfg);margin-bottom:16px}
+.tt{padding:0 12px;border:0;border-radius:calc(var(--r) - 2px);background:none;font:500 14px inherit;font-family:inherit;color:inherit;cursor:pointer;transition:.15s}
+.tt.on{background:var(--bg);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+/* Table */
+.tw{overflow:auto;border:1px solid var(--bd);border-radius:var(--r)}
+table{width:100%;border-collapse:collapse}
+th{height:40px;padding:0 16px;text-align:left;font-weight:500;color:var(--mutfg);border-bottom:1px solid var(--bd)}
+td{padding:12px 16px;border-bottom:1px solid var(--bd)}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in srgb,var(--mut) 50%,transparent)}
+td.r,th.r{text-align:right}
+/* Dialog / Toast */
+.ov{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.8)}
+.ov.show{display:flex}
+.dlg{width:460px;max-width:92vw;padding:24px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);animation:z .2s}
+@keyframes z{from{opacity:0;transform:scale(.95)}}
+.dlg h3{margin:0 0 6px;font-size:18px;font-weight:600;letter-spacing:-.01em}.dlg>p{margin:0 0 20px;color:var(--mutfg)}
+.dlg .f{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+#ts{position:fixed;right:16px;bottom:16px;z-index:20;display:flex;flex-direction:column;gap:8px}
+.toast{width:356px;max-width:92vw;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);box-shadow:0 4px 12px rgba(0,0,0,.1);animation:s .3s}
+@keyframes s{from{opacity:0;transform:translateY(16px)}}
+.toast b{display:block;font-weight:500}.toast span{color:var(--mutfg);font-size:13px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="top">
+  <b>◐ shadcn 订单台</b>
+  <nav><a class="on">概览</a><a>订单</a><a>客户</a><a>设置</a></nav>
+  <button class="btn out ic" id="theme" title="切换主题" onclick="toggleTheme()">☾</button>
+</div>
+
+<div class="wrap">
+  <h1>订单概览</h1>
+  <p class="sub">用中性色、细边框和克制的阴影，构建干净的界面。</p>
+
+  <div class="stats">
+    <div class="card cb"><small>总收入</small><div class="n">¥386,420</div><div class="d">较上月 +20.1%</div></div>
+    <div class="card cb"><small>订单数</small><div class="n">1,284</div><div class="d">较上月 +12.5%</div></div>
+    <div class="card cb"><small>活跃客户</small><div class="n">573</div><div class="d">较上月 +4.3%</div></div>
+    <div class="card cb"><small>退款率</small><div class="n">1.2%</div><div class="d">较上月 −0.3%</div></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <div class="ch"><h3>按钮</h3><p>六种常用变体与尺寸。</p></div>
+      <div class="cb"><div class="g">
+        <button class="btn" onclick="toast('Default','主要操作已触发')">Default</button><button class="btn sec">Secondary</button><button class="btn out">Outline</button>
+        <button class="btn gh">Ghost</button><button class="btn dg">Destructive</button><button class="btn sm">Small</button>
+      </div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><h3>通知偏好</h3><p>选择你希望收到的提醒。</p></div>
+      <div class="cb" style="padding-top:12px">
+        <div class="srow"><div><b style="font-weight:500">新订单提醒</b><p>有新订单时发送通知</p></div><label class="sw"><input type="checkbox" checked onchange="toast('偏好已更新',this.checked?'已开启新订单提醒':'已关闭新订单提醒')"><i></i></label></div>
+        <div class="srow"><div><b style="font-weight:500">周报邮件</b><p>每周一发送经营数据</p></div><label class="sw"><input type="checkbox" onchange="toast('偏好已更新',this.checked?'已开启周报邮件':'已关闭周报邮件')"><i></i></label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+      <div><h3>订单</h3><p>管理并查看最近的订单记录。</p></div>
+      <button class="btn" onclick="openD()">＋ 新建订单</button>
+    </div>
+    <div class="cb">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between">
+        <div class="tl" id="tl"><button class="tt on" data-f="">全部</button><button class="tt" data-f="已完成">已完成</button><button class="tt" data-f="处理中">处理中</button><button class="tt" data-f="待付款">待付款</button></div>
+        <input class="in" id="kw" style="max-width:240px" placeholder="搜索客户…" oninput="render()">
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>订单号</th><th>客户</th><th>状态</th><th class="r">金额</th><th class="r"></th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)closeD()">
+  <div class="dlg">
+    <h3>新建订单</h3><p>填写订单信息，完成后点击保存。</p>
+    <div class="fld"><label class="lb">客户名称</label><input class="in" id="f-c" placeholder="例如：瑞丰科技"></div>
+    <div class="fld"><label class="lb">订单金额</label><input class="in" id="f-a" type="number" placeholder="0.00"></div>
+    <div class="fld"><label class="lb">状态</label><select class="in" id="f-s"><option>待付款</option><option>处理中</option><option>已完成</option></select></div>
+    <div class="f"><button class="btn out" onclick="closeD()">取消</button><button class="btn" onclick="add()">保存订单</button></div>
+  </div>
+</div>
+<div id="ts"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const cls={已完成:'',处理中:'sec',待付款:'out',已取消:'dg'};
+let rows=[['SO-20261001','瑞丰科技','已完成',12800],['SO-20261002','海港贸易','处理中',8450],['SO-20261003','南岭制造','待付款',23600],['SO-20261004','晨光电子','已取消',5980],['SO-20261005','云帆物流','已完成',17200]];
+let flt='';
+function render(){
+  const k=$('kw').value.trim();
+  $('tb').innerHTML=rows.map((r,i)=>({r,i})).filter(o=>(!flt||o.r[2]===flt)&&o.r[1].includes(k)).map(({r,i})=>
+   `<tr><td style="font-weight:500">${r[0]}</td><td>${r[1]}</td><td><span class="bdg ${cls[r[2]]}">${r[2]}</span></td>
+    <td class="r">¥${r[3].toLocaleString()}</td><td class="r"><button class="btn gh sm" onclick="del(${i})">删除</button></td></tr>`).join('')
+   ||'<tr><td colspan="5" style="text-align:center;height:96px;color:var(--mutfg)">没有找到结果。</td></tr>';
+}
+function del(i){const r=rows.splice(i,1)[0];render();toast('订单已删除',r[0]+' 已被移除')}
+function openD(){$('ov').classList.add('show');$('f-c').focus()}function closeD(){$('ov').classList.remove('show')}
+function add(){
+  const c=$('f-c').value.trim(),a=+$('f-a').value;if(!c||!a)return toast('信息不完整','请填写客户名称和金额');
+  rows.unshift(['SO-'+(20261006+rows.length),c,$('f-s').value,a]);$('f-c').value=$('f-a').value='';closeD();render();toast('订单已创建','新订单已添加到列表');
+}
+function toast(t,d){
+  const e=document.createElement('div');e.className='toast';e.innerHTML=`<div><b>${t}</b><span>${d}</span></div>`;
+  const b=document.createElement('button');b.className='btn out sm';b.textContent='关闭';b.onclick=()=>e.remove();e.appendChild(b);
+  $('ts').appendChild(e);setTimeout(()=>e.remove(),3500);
+}
+$('tl').onclick=e=>{const t=e.target.closest('.tt');if(!t)return;document.querySelectorAll('.tt').forEach(x=>x.classList.remove('on'));t.classList.add('on');flt=t.dataset.f;render()};
+function toggleTheme(){const d=document.documentElement,dark=d.dataset.theme==='dark';d.dataset.theme=dark?'':'dark';$('theme').textContent=dark?'☾':'☀'}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeD()});
+if(matchMedia('(prefers-color-scheme: dark)').matches)toggleTheme();
+render();
+</script>
+</body>
+</html>
