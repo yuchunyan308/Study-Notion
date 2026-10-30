@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>林间蛇 - 贪吃蛇</title>
+<style>
+:root{--soil:#3a2a1c;--ink:#efe6cf;--gold:#e8b84a}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0,#2b2a1f,#14130e);color:var(--ink);font-family:Georgia,"Songti SC","Noto Serif SC",serif;display:flex;flex-direction:column;align-items:center;padding:12px;gap:10px;user-select:none;-webkit-user-select:none;touch-action:none}
+h1{margin:0;font-size:26px;letter-spacing:.1em;font-weight:700}
+.hud{display:flex;gap:16px;font-size:15px;flex-wrap:wrap;justify-content:center}
+.hud b{color:var(--gold);font-variant-numeric:tabular-nums}
+#wrap{position:relative;width:min(96vw,max(260px,calc(100vh - 190px)),680px);aspect-ratio:1;border:10px solid var(--soil);border-radius:14px;box-shadow:0 0 0 2px #5b432c,0 20px 50px #000a,inset 0 0 40px #000}
+#wrap.wrap{border-style:dashed;border-color:#4d5a3c}
+#c{width:100%;height:100%;display:block;border-radius:4px}
+#ov{position:absolute;inset:0;background:rgba(14,12,8,.8);backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:12px}
+#ov.hide{display:none}
+#ov h2{margin:0;font-size:32px;letter-spacing:.12em}
+#ov p{margin:0;font-size:15px;line-height:1.6;max-width:90%}
+.hint{opacity:.65;font-size:13px!important}
+.cfg{display:flex;flex-direction:column;gap:10px;align-items:center}.paused .cfg{display:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.row button,.big{font:inherit;color:var(--ink);background:transparent;border:1px solid #8a7a55;border-radius:6px;padding:7px 14px;cursor:pointer}
+.row button.on{background:var(--gold);color:#241c0e;border-color:var(--gold);font-weight:700}
+.big{background:#b8432e;border-color:#b8432e;font-size:18px;padding:10px 32px;font-weight:700}
+.big:focus-visible,.row button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+label{font-size:14px;display:flex;gap:5px;align-items:center;cursor:pointer}
+#pad{display:none;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,58px);gap:6px}
+#pad button{font-size:22px;background:#2b2418;color:var(--ink);border:1px solid #5b432c;border-radius:10px}
+@media (pointer:coarse){#pad{display:grid}}
+</style></head>
+<body>
+<h1>林间蛇</h1>
+<div class="hud">
+<span>得分 <b id="sc">0</b></span><span>最高 <b id="bs">0</b></span><span>长度 <b id="ln">4</b></span><span>速度 <b id="sp">0</b> 格/秒</span><span id="dn"></span>
+</div>
+<div id="wrap">
+<canvas id="c"></canvas>
+<div id="ov">
+<h2 id="ttl">林间蛇</h2>
+<p id="msg">吃苹果长大，金苹果加倍得分，紫色毒蘑菇会让你缩短。</p>
+<div class="cfg"><div class="row" id="dr"></div>
+<div class="row"><label><input type="checkbox" id="oW">穿墙</label><label><input type="checkbox" id="oR">岩石障碍</label><label><input type="checkbox" id="oS" checked>音效</label></div></div>
+<button class="big" id="go">开始游戏</button>
+<p class="hint">方向键或 WASD 移动，空格暂停，触屏可滑动</p>
+</div></div>
+<div id="pad"><span></span><button data-d="0,-1">▲</button><span></span><button data-d="-1,0">◀</button><button data-d="0,1">▼</button><button data-d="1,0">▶</button></div>
+<script>
+const $=id=>document.getElementById(id);
+const N=24,S=28,W=N*S,C=$('c'),X=C.getContext('2d');C.width=C.height=W;
+const DIFF={
+ easy:{n:'休闲',sp:150,min:95,step:2,rocks:0,wall:false,poison:.1,m:1},
+ normal:{n:'标准',sp:120,min:70,step:2.5,rocks:4,wall:true,poison:.15,m:1.5},
+ hard:{n:'困难',sp:95,min:52,step:3,rocks:8,wall:true,poison:.25,m:2},
+ insane:{n:'地狱',sp:70,min:38,step:3,rocks:12,wall:true,poison:.35,m:3,add:true}};
+const opt={wrap:false,rocks:true,sound:true};
+let diff='normal',st='menu',snake,prev,dir,q,foods,rocks,parts,score,eaten,grow,tick,acc,shake,ang,t=0,best={};
+try{best=JSON.parse(localStorage.getItem('snakeBest')||'{}')}catch(e){}
+
+/* ---------- 音效 ---------- */
+let ac;
+function beep(f,d=.1,ty='square',v=.05){if(!opt.sound)return;try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+
+/* ---------- 草地背景 ---------- */
+const bg=document.createElement('canvas');bg.width=bg.height=W;
+(()=>{const g=bg.getContext('2d'),R=Math.random;
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){g.fillStyle=(x+y)%2?'#5d8a38':'#67953f';g.fillRect(x*S,y*S,S,S)}
+ for(let i=0;i<7000;i++){g.fillStyle=`rgba(${R()<.5?'255,255,200':'20,50,10'},${R()*.12})`;g.fillRect(R()*W,R()*W,1+R()*2,1+R()*2)}
+ for(let i=0;i<2200;i++){const x=R()*W,y=R()*W;g.strokeStyle=`rgba(${30+R()*40|0},${90+R()*70|0},30,.35)`;g.beginPath();g.moveTo(x,y);g.lineTo(x+R()*4-2,y-3-R()*5);g.stroke()}
+ const v=g.createRadialGradient(W/2,W/2,W*.3,W/2,W/2,W*.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.45)');g.fillStyle=v;g.fillRect(0,0,W,W)})();
+
+/* ---------- 游戏逻辑 ---------- */
+const occ=(x,y)=>snake.some(s=>s.x==x&&s.y==y)||rocks.some(s=>s.x==x&&s.y==y)||foods.some(s=>s.x==x&&s.y==y);
+function free(ok){for(let k=0;k<500;k++){const x=Math.random()*N|0,y=Math.random()*N|0;if(occ(x,y)||(ok&&!ok(x,y)))continue;return{x,y}}return null}
+function addRock(ok){const c=free(ok);if(c)rocks.push({...c,p:Array.from({length:9},()=>.72+Math.random()*.28),r:Math.random()*6})}
+function spawn(type){const c=free();if(!c)return;const life=type=='golden'?8000:type=='poison'?12000:1e9;foods.push({...c,type,life,max:life})}
+function reset(){const D=DIFF[diff];snake=[];for(let i=0;i<4;i++)snake.push({x:9-i,y:12});prev=snake.map(s=>({...s}));
+ dir={x:1,y:0};q=[];ang=0;foods=[];rocks=[];parts=[];score=0;eaten=0;grow=0;acc=0;shake=0;tick=D.sp;
+ if(opt.rocks){const n=D.rocks||3;for(let i=0;i<n;i++)addRock((x,y)=>!(Math.abs(y-12)<=1&&x<=17))}
+ spawn('apple');hud()}
+function hud(){const D=DIFF[diff];$('sc').textContent=score;$('bs').textContent=Math.max(best[diff]||0,score||0);$('ln').textContent=snake?snake.length:4;$('sp').textContent=(1000/tick).toFixed(1);$('dn').textContent='难度：'+D.n+(opt.wrap?'（穿墙）':'')}
+function burst(x,y,c,n=14){for(let i=0;i<n;i++){const a=Math.random()*6.28,s=.05+Math.random()*.15;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:600,max:600,c})}}
+function die(msg){st='over';shake=14;beep(110,.5,'sawtooth',.08);
+ if(score>(best[diff]||0)){best[diff]=score;try{localStorage.setItem('snakeBest',JSON.stringify(best))}catch(e){}}
+ hud();show('游戏结束',`${msg}。得分 ${score}，长度 ${snake.length}，${DIFF[diff].n}难度最高分 ${best[diff]||0}。`,'再来一局')}
+function step(){const D=DIFF[diff];prev=snake.map(s=>({x:s.x,y:s.y}));if(q.length)dir=q.shift();
+ let nx=snake[0].x+dir.x,ny=snake[0].y+dir.y;
+ if(nx<0||nx>=N||ny<0||ny>=N){if(opt.wrap){nx=(nx+N)%N;ny=(ny+N)%N}else return die('撞到了围墙')}
+ const body=grow>0?snake:snake.slice(0,-1);
+ if(body.some(s=>s.x==nx&&s.y==ny))return die('咬到了自己');
+ if(rocks.some(r=>r.x==nx&&r.y==ny))return die('撞上了岩石');
+ snake.unshift({x:nx,y:ny});if(grow>0)grow--;else snake.pop();
+ const fi=foods.findIndex(f=>f.x==nx&&f.y==ny);
+ if(fi>=0){const f=foods.splice(fi,1)[0];let gain=0,col;const px=(nx+.5)*S,py=(ny+.5)*S;
+  if(f.type=='apple'){gain=10;grow++;eaten++;col='#d9402b';beep(520,.08);spawn('apple');
+   if(Math.random()<.12&&!foods.some(o=>o.type=='golden'))spawn('golden');
+   if(Math.random()<D.poison&&foods.filter(o=>o.type=='poison').length<2)spawn('poison');
+   if(D.add&&eaten%3==0)addRock((x,y)=>Math.abs(x-nx)+Math.abs(y-ny)>4);
+   tick=Math.max(D.min,D.sp-D.step*eaten)}
+  else if(f.type=='golden'){gain=50;grow+=2;col='#f2c84b';beep(880,.15,'triangle')}
+  else{gain=-20;snake.pop();snake.pop();col='#8a4fb0';beep(150,.25,'sawtooth');if(snake.length<3)return die('吃到了毒蘑菇')}
+  const g=Math.round(gain*D.m);score=Math.max(0,score+g);burst(px,py,col);
+  parts.push({x:px,y:py-8,vx:0,vy:-.04,l:900,max:900,c:g<0?'#c79bf0':'#ffe9a0',text:(g>0?'+':'')+g})}
+ hud()}
+
+/* ---------- 绘制 ---------- */
+const ci=(x,y,r)=>{X.beginPath();X.arc(x,y,r,0,7);X.fill()};
+function points(a){return snake.map((s,i)=>{const p=prev[i]||s,dx=s.x-p.x,dy=s.y-p.y;let x,y;
+ if(Math.abs(dx)>1.5||Math.abs(dy)>1.5){x=s.x;y=s.y}else{x=p.x+dx*a;y=p.y+dy*a}return[(x+.5)*S,(y+.5)*S]})}
+function samples(P){const o=[{x:P[0][0],y:P[0][1],d:0}];let d=0;
+ for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(l>S*1.6)continue;const n=Math.max(1,Math.ceil(l/4));
+  for(let k=1;k<=n;k++){d+=l/n;o.push({x:a[0]+(b[0]-a[0])*k/n,y:a[1]+(b[1]-a[1])*k/n,d})}}
+ o.forEach(s=>s.k=d?s.d/d:0);return o}
+function drawSnake(a){const P=points(a),o=samples(P),rad=s=>S*(.46-.2*Math.pow(s.k,1.5));
+ X.fillStyle='rgba(0,0,0,.28)';o.forEach(s=>ci(s.x+4,s.y+5,rad(s)));
+ for(let i=o.length-1;i>=0;i--){const s=o[i],r=rad(s),m=Math.sin(s.d/7);
+  X.fillStyle=`hsl(${92-s.k*20},${48-s.k*8}%,${27+m*5+(1-s.k)*5}%)`;ci(s.x,s.y,r);
+  if(i%5==0){X.fillStyle='rgba(20,35,10,.4)';ci(s.x,s.y,r*.55)}
+  X.fillStyle='rgba(255,255,255,.07)';ci(s.x-r*.25,s.y-r*.3,r*.45)}
+ const[hx,hy]=P[0];X.save();X.translate(hx,hy);X.rotate(ang);
+ if(Math.sin(t/260)>.8||t%2400<250){X.strokeStyle='#d02c3c';X.lineWidth=2;X.beginPath();X.moveTo(S*.5,0);X.lineTo(S*.95,0);X.moveTo(S*.95,0);X.lineTo(S*1.15,-4);X.moveTo(S*.95,0);X.lineTo(S*1.15,4);X.stroke()}
+ const g=X.createRadialGradient(-2,-4,2,0,0,S*.6);g.addColorStop(0,'#5c8f30');g.addColorStop(1,'#2f5418');
+ X.fillStyle=g;X.beginPath();X.ellipse(S*.08,0,S*.6,S*.5,0,0,7);X.fill();
+ for(const sy of[-1,1]){X.fillStyle='#e6d24a';ci(S*.2,sy*S*.27,S*.13);X.fillStyle='#111';X.beginPath();X.ellipse(S*.22,sy*S*.27,S*.03,S*.09,0,0,7);X.fill();X.fillStyle='rgba(0,0,0,.5)';ci(S*.5,sy*S*.1,1.6)}
+ X.restore()}
+function drawFood(f){const cx=(f.x+.5)*S,cy=(f.y+.5)*S,p=1+.06*Math.sin(t/200);
+ X.fillStyle='rgba(0,0,0,.25)';X.beginPath();X.ellipse(cx+3,cy+S*.3,S*.3,S*.12,0,0,7);X.fill();
+ if(f.type=='apple'){const g=X.createRadialGradient(cx-4,cy-5,2,cx,cy,S*.38);g.addColorStop(0,'#ff7a5c');g.addColorStop(.6,'#c8321f');g.addColorStop(1,'#7e1a10');
+  X.fillStyle=g;ci(cx,cy,S*.34*p);X.strokeStyle='#4a2f1a';X.lineWidth=2;X.beginPath();X.moveTo(cx,cy-S*.3);X.lineTo(cx+2,cy-S*.45);X.stroke();
+  X.fillStyle='#4f9a2c';X.beginPath();X.ellipse(cx+6,cy-S*.38,6,3,-.5,0,7);X.fill();X.fillStyle='rgba(255,255,255,.5)';X.beginPath();X.ellipse(cx-5,cy-5,3,5,.6,0,7);X.fill()}
+ else if(f.type=='golden'){X.save();X.shadowColor='#ffd34a';X.shadowBlur=14+6*Math.sin(t/150);
+  const g=X.createRadialGradient(cx-4,cy-5,2,cx,cy,S*.4);g.addColorStop(0,'#fff3a8');g.addColorStop(.6,'#eab62c');g.addColorStop(1,'#a8740d');X.fillStyle=g;ci(cx,cy,S*.34*p);X.restore();
+  X.strokeStyle='#ffe58a';X.lineWidth=2;X.beginPath();X.arc(cx,cy,S*.45,-1.57,-1.57+6.28*f.life/f.max);X.stroke();
+  X.fillStyle='#4f9a2c';X.beginPath();X.ellipse(cx+6,cy-S*.36,6,3,-.5,0,7);X.fill()}
+ else{if(f.life<2500&&Math.sin(t/90)>0)X.globalAlpha=.35;
+  X.fillStyle='#e9dcc0';X.fillRect(cx-4,cy-2,8,S*.32);
+  const g=X.createRadialGradient(cx-4,cy-8,2,cx,cy-2,S*.4);g.addColorStop(0,'#b06ad6');g.addColorStop(1,'#5a2a7a');
+  X.fillStyle=g;X.beginPath();X.arc(cx,cy-1,S*.38*p,Math.PI,0);X.closePath();X.fill();
+  X.fillStyle='#f3e8ff';ci(cx-5,cy-8,2.5);ci(cx+4,cy-6,2);ci(cx+8,cy-3,1.6);X.globalAlpha=1}}
+function drawRock(r){const cx=(r.x+.5)*S,cy=(r.y+.5)*S;
+ X.fillStyle='rgba(0,0,0,.3)';X.beginPath();X.ellipse(cx+4,cy+S*.3,S*.42,S*.15,0,0,7);X.fill();
+ X.beginPath();r.p.forEach((k,j)=>{const a=j/9*6.283+r.r,x=cx+Math.cos(a)*S*.44*k,y=cy+Math.sin(a)*S*.4*k;j?X.lineTo(x,y):X.moveTo(x,y)});X.closePath();
+ const g=X.createRadialGradient(cx-5,cy-6,2,cx,cy,S*.5);g.addColorStop(0,'#b5b2a6');g.addColorStop(1,'#4d4b45');X.fillStyle=g;X.fill();X.strokeStyle='#33312c';X.lineWidth=1.5;X.stroke()}
+function draw(a){X.save();if(shake>.5)X.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+ X.drawImage(bg,0,0);rocks.forEach(drawRock);foods.forEach(drawFood);drawSnake(a);
+ X.textAlign='center';parts.forEach(p=>{X.globalAlpha=Math.max(0,p.l/p.max);X.fillStyle=p.c;if(p.text){X.font='bold 18px Georgia';X.fillText(p.text,p.x,p.y)}else ci(p.x,p.y,3)});X.globalAlpha=1;X.restore()}
+function loop(ts){const dt=Math.min(50,ts-(loop.l||ts));loop.l=ts;t=ts;
+ if(st=='play'){acc+=dt;while(acc>=tick&&st=='play'){acc-=tick;step()}
+  foods.forEach(f=>{if(f.type!='apple')f.life-=dt});foods=foods.filter(f=>f.life>0)}
+ let df=Math.atan2(dir.y,dir.x)-ang;ang+=Math.atan2(Math.sin(df),Math.cos(df))*.3;
+ parts.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt});parts=parts.filter(p=>p.l>0);shake*=.9;
+ draw(Math.min(1,acc/tick));requestAnimationFrame(loop)}
+
+/* ---------- 界面与输入 ---------- */
+function show(title,msg,btn){$('ttl').textContent=title;$('msg').textContent=msg;$('go').textContent=btn;$('ov').className=st=='pause'?'paused':'';}
+function setDiff(k){diff=k;opt.wrap=!DIFF[k].wall;opt.rocks=DIFF[k].rocks>0;$('oW').checked=opt.wrap;$('oR').checked=opt.rocks;
+ document.querySelectorAll('#dr button').forEach(b=>b.classList.toggle('on',b.dataset.k==k));$('wrap').classList.toggle('wrap',opt.wrap);
+ if(st!='play'){reset()}hud()}
+Object.keys(DIFF).forEach(k=>{const b=document.createElement('button');b.textContent=DIFF[k].n;b.dataset.k=k;b.onclick=()=>setDiff(k);$('dr').appendChild(b)});
+$('oW').onchange=e=>{opt.wrap=e.target.checked;$('wrap').classList.toggle('wrap',opt.wrap);hud()};
+$('oR').onchange=e=>{opt.rocks=e.target.checked;reset()};
+$('oS').onchange=e=>opt.sound=e.target.checked;
+function start(){if(st=='pause'){st='play'}else{reset();st='play'}$('ov').className='hide';beep(440,.06)}
+function pause(){if(st=='play'){st='pause';show('已暂停','按空格或点击继续。','继续')}else if(st=='pause')start()}
+$('go').onclick=start;
+function turn(dx,dy){if(st!='play')return;const l=q.length?q[q.length-1]:dir;if((l.x==-dx&&l.y==-dy)||(l.x==dx&&l.y==dy))return;if(q.length<3)q.push({x:dx,y:dy})}
+const KEYS={ArrowUp:[0,-1],w:[0,-1],W:[0,-1],ArrowDown:[0,1],s:[0,1],S:[0,1],ArrowLeft:[-1,0],a:[-1,0],A:[-1,0],ArrowRight:[1,0],d:[1,0],D:[1,0]};
+addEventListener('keydown',e=>{if(KEYS[e.key]){e.preventDefault();turn(...KEYS[e.key])}
+ else if(e.key==' '||e.key=='p'||e.key=='P'){e.preventDefault();st=='play'||st=='pause'?pause():start()}
+ else if(e.key=='Enter'&&st!='play')start()});
+document.querySelectorAll('#pad button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();turn(...b.dataset.d.split(',').map(Number))}));
+let tx,ty;addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{if(tx==null)return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;tx=null;
+ if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;Math.abs(dx)>Math.abs(dy)?turn(Math.sign(dx),0):turn(0,Math.sign(dy))},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&st=='play')pause()});
+
+setDiff('normal');requestAnimationFrame(loop);
+</script></body></html>
