@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>俄罗斯方块</title>
+<style>
+:root{--ink:#e8ecf3;--acc:#f0b429}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0,#1d2230,#0b0d13);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:10px;gap:10px;user-select:none;-webkit-user-select:none;touch-action:none}
+h1{margin:0;font-size:24px;letter-spacing:.15em}
+#game{display:flex;gap:14px;align-items:flex-start;justify-content:center}
+.side{display:flex;flex-direction:column;gap:12px;width:120px}
+.box{background:linear-gradient(#171c27,#10141c);border:1px solid #2a3344;border-radius:10px;padding:8px;text-align:center;font-size:13px;color:#9aa6bd}
+.box canvas{width:100%;display:block;margin-top:4px}
+.box b{display:block;font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums;margin-bottom:4px}
+#bw{position:relative;height:min(76vh,640px);aspect-ratio:1/2;border-radius:10px;border:3px solid #3a465c;box-shadow:0 0 0 2px #151a24,0 20px 50px #000a,0 0 40px #3a6fe033}
+#b{width:100%;height:100%;display:block;border-radius:6px}
+#ov{position:absolute;inset:0;background:rgba(8,10,16,.82);backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:10px}
+#ov.hide{display:none}
+#ov h2{margin:0;font-size:28px;letter-spacing:.12em}
+#ov p{margin:0;font-size:14px;line-height:1.6}
+.hint{opacity:.6;font-size:12px!important}
+.cfg{display:flex;flex-direction:column;gap:10px;align-items:center}.paused .cfg{display:none}
+.row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.row button,.big{font:inherit;color:var(--ink);background:transparent;border:1px solid #4a566e;border-radius:6px;padding:6px 12px;cursor:pointer}
+.row button.on{background:var(--acc);color:#1b1405;border-color:var(--acc);font-weight:700}
+.big{background:#3a6fe0;border-color:#3a6fe0;font-size:17px;padding:9px 28px;font-weight:700}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+label{font-size:13px;display:flex;gap:5px;align-items:center;cursor:pointer}
+#pad{display:none;gap:8px;flex-wrap:wrap;justify-content:center}
+#pad button{width:56px;height:52px;font-size:18px;background:#1b2130;color:var(--ink);border:1px solid #3a465c;border-radius:10px}
+@media (pointer:coarse){#pad{display:flex}}
+@media (max-width:640px){#game{gap:6px}.side{width:70px}.box{padding:5px;font-size:11px}.box b{font-size:16px}#bw{height:min(52vh,calc((100vw - 170px)*2))}}
+</style></head>
+<body>
+<h1>俄罗斯方块</h1>
+<div id="game">
+ <div class="side">
+  <div class="box">暂存<canvas id="h" width="120" height="90"></canvas></div>
+  <div class="box"><b id="sc">0</b>得分</div>
+  <div class="box"><b id="bs">0</b>最高分</div>
+  <div class="box"><b id="lv">1</b>等级</div>
+  <div class="box"><b id="ln">0</b>消除行数</div>
+ </div>
+ <div id="bw"><canvas id="b"></canvas>
+  <div id="ov"><h2 id="ttl">俄罗斯方块</h2><p id="msg">消除整行得分，一次消 4 行最高分。</p>
+   <div class="cfg"><div class="row" id="dr"></div>
+    <div class="row"><label><input type="checkbox" id="oG" checked>落点提示</label><label><input type="checkbox" id="oS" checked>音效</label></div></div>
+   <button class="big" id="go">开始游戏</button>
+   <p class="hint">←→ 移动，↑/X 顺时针，Z 逆时针，↓ 软降，空格 直落，C 暂存，P 暂停</p></div></div>
+ <div class="side"><div class="box">下一个<canvas id="n" width="120" height="330"></canvas></div></div>
+</div>
+<div id="pad">
+ <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+ <button data-k="ccw">↺</button><button data-k="cw">↻</button><button data-k="hold">暂存</button><button data-k="hard">直落</button>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const COLS=10,ROWS=20,Z=30,B=$('b'),G=B.getContext('2d'),HC=$('h').getContext('2d'),NC=$('n').getContext('2d');
+B.width=COLS*Z;B.height=ROWS*Z;
+const SH={I:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],O:[[1,1],[1,1]],T:[[0,1,0],[1,1,1],[0,0,0]],S:[[0,1,1],[1,1,0],[0,0,0]],Z:[[1,1,0],[0,1,1],[0,0,0]],J:[[1,0,0],[1,1,1],[0,0,0]],L:[[0,0,1],[1,1,1],[0,0,0]]};
+const COL={I:['#9ff6ff','#1bbad8','#0a6a84'],O:['#fff0a0','#f1c40f','#8f7108'],T:['#e3a8ff','#a64bd6','#5a2279'],S:['#b8f59a','#4fc23a','#276d1b'],Z:['#ffb0a8','#e5483a','#85190f'],J:['#a9c4ff','#3a6fe0','#1b3c8a'],L:['#ffd2a0','#f08a24','#8a4709'],G:['#c9cdd4','#7b828e','#3b4049']};
+const Z5=[[0,0],[0,0],[0,0],[0,0],[0,0]];
+const OJ=[Z5,[[0,0],[1,0],[1,-1],[0,2],[1,2]],Z5,[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]]];
+const OI=[[[0,0],[-1,0],[2,0],[-1,0],[2,0]],[[-1,0],[0,0],[0,0],[0,1],[0,-2]],[[-1,1],[1,1],[-2,1],[1,0],[-2,0]],[[0,1],[0,1],[0,1],[0,-1],[0,2]]];
+const DIFF={
+ easy:{n:'休闲',start:1,per:12,g:1.3,lock:700},
+ normal:{n:'标准',start:1,per:10,g:1,lock:500},
+ hard:{n:'困难',start:6,per:10,g:1,lock:400},
+ insane:{n:'地狱',start:10,per:8,g:1,lock:300,gar:25000}};
+const opt={ghost:true,sound:true};
+let diff='normal',st='menu',grid,cur,queue,hold,canHold,score,lines,level,combo,b2b,held,parts,gar,lockT,gt,resets,clearRows,clearT,shake,best={},t=0;
+try{best=JSON.parse(localStorage.getItem('tetrisBest')||'{}')}catch(e){}
+
+let ac;function beep(f,d=.08,ty='square',v=.04){if(!opt.sound)return;try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+
+/* ---------- 核心逻辑 ---------- */
+const rot=(m,d)=>{const n=m.length;return m.map((_,i)=>m.map((_,j)=>d>0?m[n-1-j][i]:m[j][n-1-i]))};
+function ok(m,x,y){for(let i=0;i<m.length;i++)for(let j=0;j<m.length;j++)if(m[i][j]){const gx=x+j,gy=y+i;if(gx<0||gx>=COLS||gy>=ROWS||(gy>=0&&grid[gy][gx]))return false}return true}
+const grounded=()=>!ok(cur.m,cur.x,cur.y+1);
+function take(){while(queue.length<8){const b='IOTSZJL'.split('');for(let i=6;i>0;i--){const j=Math.random()*(i+1)|0;[b[i],b[j]]=[b[j],b[i]]}queue.push(...b)}return queue.shift()}
+function mk(t){return{t,m:SH[t].map(r=>[...r]),r:0,x:t=='O'?4:3,y:t=='I'?-1:0}}
+function spawn(){cur=mk(take());lockT=gt=resets=0;canHold=true;if(!ok(cur.m,cur.x,cur.y))over()}
+function moved(){if(grounded()&&resets<15){lockT=0;resets++}}
+function move(dx){if(ok(cur.m,cur.x+dx,cur.y)){cur.x+=dx;moved();beep(200,.03);return true}return false}
+function rotate(d){if(cur.t=='O')return;const to=(cur.r+d+4)%4,m=rot(cur.m,d),tab=cur.t=='I'?OI:OJ;
+ for(let i=0;i<5;i++){const kx=tab[cur.r][i][0]-tab[to][i][0],ky=tab[cur.r][i][1]-tab[to][i][1];
+  if(ok(m,cur.x+kx,cur.y-ky)){cur.m=m;cur.x+=kx;cur.y-=ky;cur.r=to;moved();beep(320,.04);return}}}
+function doHold(){if(!canHold)return;const t=cur.t;cur=hold?mk(hold):mk(take());hold=t;canHold=false;lockT=gt=resets=0;beep(260,.06,'triangle');if(!ok(cur.m,cur.x,cur.y))over()}
+function hard(){let n=0;while(ok(cur.m,cur.x,cur.y+1)){cur.y++;n++}score+=n*2;shake=n>2?6:3;beep(130,.1,'sawtooth');lock()}
+function lock(){let hi=false;cur.m.forEach((r,i)=>r.forEach((v,j)=>{if(v){const y=cur.y+i,x=cur.x+j;if(y<0)hi=true;else grid[y][x]=cur.t}}));
+ if(hi)return over();
+ const rows=[];grid.forEach((r,i)=>{if(r.every(v=>v))rows.push(i)});
+ if(!rows.length){combo=-1;beep(150,.06);spawn();hud();return}
+ combo++;const n=rows.length,base=[0,100,300,500,800][n];let pts=base*level;
+ if(n==4&&b2b)pts*=1.5;b2b=n==4;pts+=combo*50*level;score+=Math.round(pts);lines+=n;
+ level=DIFF[diff].start+Math.floor(lines/DIFF[diff].per);
+ rows.forEach(y=>grid[y].forEach((v,x)=>{for(let k=0;k<3;k++)parts.push({x:(x+.5)*Z,y:(y+.5)*Z,vx:(Math.random()-.5)*.35,vy:-Math.random()*.3,l:700,max:700,c:COL[v][1]})}));
+ clearRows=rows;clearT=0;st='clear';shake=n*2;beep(440+n*110,.2,'triangle',.06);hud()}
+function finishClear(){grid=grid.filter((_,i)=>!clearRows.includes(i));while(grid.length<ROWS)grid.unshift(Array(COLS).fill(0));st='play';spawn()}
+function garbage(){if(grid[0].some(v=>v))return over();grid.shift();const r=Array(COLS).fill('G');r[Math.random()*COLS|0]=0;grid.push(r);if(!ok(cur.m,cur.x,cur.y))cur.y--;shake=6;beep(90,.2,'sawtooth')}
+function over(){st='over';shake=12;beep(100,.6,'sawtooth',.07);
+ if(score>(best[diff]||0)){best[diff]=score;try{localStorage.setItem('tetrisBest',JSON.stringify(best))}catch(e){}}
+ hud();show('游戏结束',`得分 ${score}，消除 ${lines} 行，到达 ${level} 级。${DIFF[diff].n}难度最高分 ${best[diff]||0}。`,'再来一局')}
+function reset(){grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));queue=[];hold=null;score=lines=0;combo=-1;b2b=false;held={};parts=[];gar=0;shake=0;level=DIFF[diff].start;spawn();hud()}
+function hud(){$('sc').textContent=score||0;$('bs').textContent=Math.max(best[diff]||0,score||0);$('lv').textContent=level||1;$('ln').textContent=lines||0}
+const gms=()=>Math.max(16,Math.pow(.8-(level-1)*.007,level-1)*1000*DIFF[diff].g);
+
+/* ---------- 更新 ---------- */
+const DAS=150,ARR=45;
+function update(dt){const D=DIFF[diff];
+ for(const k of['left','right']){const h=held[k];if(!h)continue;h.t+=dt;if(h.t>=DAS){h.a+=dt;while(h.a>=ARR){h.a-=ARR;move(k=='left'?-1:1)}}}
+ const gi=held.down?Math.min(gms(),45):gms();
+ if(grounded()){gt=0;lockT+=dt;if(lockT>=D.lock)lock()}
+ else{lockT=0;gt+=dt;while(gt>=gi&&!grounded()){gt-=gi;cur.y++;if(held.down)score++}}
+ if(D.gar&&st=='play'){gar+=dt;if(gar>=D.gar){gar=0;garbage()}}
+ hud()}
+
+/* ---------- 绘制 ---------- */
+function cell(g,x,y,s,k,a=1){const c=COL[k];g.globalAlpha=a;g.fillStyle=c[2];g.fillRect(x,y,s,s);
+ const gr=g.createLinearGradient(x,y,x+s,y+s);gr.addColorStop(0,c[0]);gr.addColorStop(.5,c[1]);gr.addColorStop(1,c[2]);
+ g.fillStyle=gr;g.fillRect(x+1.5,y+1.5,s-3,s-3);
+ g.fillStyle='rgba(255,255,255,.4)';g.fillRect(x+1.5,y+1.5,s-3,s*.16);g.fillStyle='rgba(255,255,255,.18)';g.fillRect(x+1.5,y+1.5,s*.14,s-3);
+ g.fillStyle='rgba(0,0,0,.22)';g.fillRect(x+1.5,y+s-1.5-s*.14,s-3,s*.14);g.globalAlpha=1}
+function preview(g,t,cx,cy,s){const m=SH[t],n=m.length;let x0=9,x1=-1,y0=9,y1=-1;
+ m.forEach((r,i)=>r.forEach((v,j)=>{if(v){x0=Math.min(x0,j);x1=Math.max(x1,j);y0=Math.min(y0,i);y1=Math.max(y1,i)}}));
+ const ox=cx-(x1-x0+1)*s/2-x0*s,oy=cy-(y1-y0+1)*s/2-y0*s;
+ m.forEach((r,i)=>r.forEach((v,j)=>{if(v)cell(g,ox+j*s,oy+i*s,s,t)}))}
+function side(){HC.clearRect(0,0,120,90);if(hold)preview(HC,hold,60,45,22);
+ NC.clearRect(0,0,120,330);queue.slice(0,4).forEach((p,i)=>preview(NC,p,60,45+i*80,i?20:22))}
+function draw(){G.save();if(shake>.5)G.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+ const bg=G.createLinearGradient(0,0,0,B.height);bg.addColorStop(0,'#10141d');bg.addColorStop(1,'#0a0c12');G.fillStyle=bg;G.fillRect(0,0,B.width,B.height);
+ G.strokeStyle='rgba(120,150,200,.08)';G.lineWidth=1;G.beginPath();for(let i=1;i<COLS;i++){G.moveTo(i*Z+.5,0);G.lineTo(i*Z+.5,B.height)}for(let i=1;i<ROWS;i++){G.moveTo(0,i*Z+.5);G.lineTo(B.width,i*Z+.5)}G.stroke();
+ grid.forEach((r,y)=>r.forEach((v,x)=>{if(v)cell(G,x*Z,y*Z,Z,v)}));
+ if(st=='clear'){const f=Math.floor(clearT/60)%2==0;clearRows.forEach(y=>{G.fillStyle=f?'rgba(255,255,255,.85)':'rgba(255,255,255,.35)';G.fillRect(0,y*Z,B.width,Z)})}
+ else if(cur&&st!='menu'){let gy=cur.y;while(ok(cur.m,cur.x,gy+1))gy++;
+  if(opt.ghost&&gy!=cur.y)cur.m.forEach((r,i)=>r.forEach((v,j)=>{if(v){const x=(cur.x+j)*Z,y=(gy+i)*Z;G.fillStyle=COL[cur.t][1]+'33';G.fillRect(x+1,y+1,Z-2,Z-2);G.strokeStyle=COL[cur.t][0]+'aa';G.lineWidth=1.5;G.strokeRect(x+2,y+2,Z-4,Z-4)}}));
+  cur.m.forEach((r,i)=>r.forEach((v,j)=>{if(v&&cur.y+i>=0)cell(G,(cur.x+j)*Z,(cur.y+i)*Z,Z,cur.t)}))}
+ parts.forEach(p=>{G.globalAlpha=Math.max(0,p.l/p.max);G.fillStyle=p.c;G.fillRect(p.x-3,p.y-3,6,6)});G.globalAlpha=1;G.restore()}
+let last=0;
+function loop(ts){const dt=Math.min(50,ts-(last||ts));last=ts;t=ts;
+ if(st=='play')update(dt);
+ else if(st=='clear'){clearT+=dt;if(clearT>=280)finishClear()}
+ parts.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=.0008*dt;p.l-=dt});parts=parts.filter(p=>p.l>0);shake*=.88;
+ draw();side();requestAnimationFrame(loop)}
+
+/* ---------- 界面与输入 ---------- */
+function show(title,msg,btn){$('ttl').textContent=title;$('msg').textContent=msg;$('go').textContent=btn;$('ov').className=st=='pause'?'paused':''}
+function setDiff(k){diff=k;document.querySelectorAll('#dr button').forEach(b=>b.classList.toggle('on',b.dataset.k==k));if(st!='play'&&st!='pause')reset();hud()}
+Object.keys(DIFF).forEach(k=>{const b=document.createElement('button');b.textContent=DIFF[k].n;b.dataset.k=k;b.onclick=()=>setDiff(k);$('dr').appendChild(b)});
+$('oG').onchange=e=>opt.ghost=e.target.checked;$('oS').onchange=e=>opt.sound=e.target.checked;
+function start(){if(st=='pause')st='play';else{reset();st='play'}$('ov').className='hide';beep(440,.06)}
+function pause(){if(st=='play'){st='pause';held={};show('已暂停','按 P 或点击继续。','继续')}else if(st=='pause')start()}
+$('go').onclick=start;
+function press(k){if(k=='pause')return pause();if(st!='play')return;
+ if(k=='left'||k=='right'){if(held[k])return;delete held[k=='left'?'right':'left'];held[k]={t:0,a:0};move(k=='left'?-1:1)}
+ else if(k=='down'){held.down=held.down||{t:0}}
+ else if(k=='cw')rotate(1);else if(k=='ccw')rotate(-1);else if(k=='hard')hard();else if(k=='hold')doHold()}
+const release=k=>{delete held[k]};
+const KEYS={ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right',ArrowDown:'down',s:'down',S:'down',ArrowUp:'cw',w:'cw',x:'cw',X:'cw',z:'ccw',Z:'ccw',' ':'hard',c:'hold',C:'hold',Shift:'hold',p:'pause',P:'pause',Escape:'pause'};
+addEventListener('keydown',e=>{const k=KEYS[e.key];if(k){e.preventDefault();if(e.repeat)return;
+  if(k=='hard'&&st!='play'&&st!='pause'&&st!='clear'){start();return}press(k)}
+ else if(e.key=='Enter'&&st!='play'&&st!='clear')start()});
+addEventListener('keyup',e=>{const k=KEYS[e.key];if(k)release(k)});
+document.querySelectorAll('#pad button').forEach(b=>{const k=b.dataset.k;
+ b.addEventListener('pointerdown',e=>{e.preventDefault();press(k)});
+ for(const ev of['pointerup','pointerleave','pointercancel'])b.addEventListener(ev,()=>release(k))});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&st=='play')pause()});
+setDiff('normal');requestAnimationFrame(loop);
+</script></body></html>
