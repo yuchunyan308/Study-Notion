@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#101820" />
+<title>坦克大战 · Battle City</title>
+<style>
+  :root {
+    --bg: #101820;
+    --panel: #182631;
+    --panel2: #213442;
+    --line: rgba(183, 211, 224, .16);
+    --text: #e9f2f4;
+    --muted: #8fa7b4;
+    --gold: #ffc857;
+    --green: #8bd450;
+    --red: #ff6868;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: radial-gradient(ellipse at 50% 0%, #243846 0%, #101820 62%); color: var(--text); font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif; }
+  body { padding: 22px 14px 28px; display: flex; justify-content: center; }
+  .app { width: min(100%, 980px); }
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin: 0 auto 14px; max-width: 900px; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand-mark { width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#f5c451,#db8f27);box-shadow:0 5px 18px #0005;color:#17232b;font-size:24px; }
+  h1 { font-size: clamp(20px, 3vw, 28px); letter-spacing: .06em; margin:0; font-weight:900; }
+  .subtitle { color:var(--muted);font-size:12px;letter-spacing:.16em;margin-top:3px;text-transform:uppercase; }
+  .top-tag { border:1px solid var(--line);color:#b8cbd3;background:#172630;border-radius:99px;padding:8px 12px;font-size:12px;white-space:nowrap; }
+  .game-shell { width: min(100%, 900px); margin:auto; padding:12px; border:1px solid #58707c66; border-radius:18px; background:linear-gradient(145deg,#233743,#15232d 65%); box-shadow:0 24px 70px #0008, inset 0 1px #ffffff12; }
+  .screen-wrap { position:relative; width:100%; overflow:hidden; border-radius:10px; background:#090f13; }
+  canvas { display:block;width:100%;height:auto; image-rendering:pixelated; image-rendering:crisp-edges; }
+  .screen-scan { pointer-events:none;position:absolute;inset:0;opacity:.10;background:repeating-linear-gradient(to bottom,transparent 0 3px,#000 4px 5px);mix-blend-mode:multiply; }
+  .bottomline { display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 4px 2px;color:var(--muted);font-size:12px; }
+  .status-dot { display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:7px;box-shadow:0 0 8px var(--green); }
+  .kbd { display:inline-block;min-width:22px;text-align:center;padding:3px 6px;border-radius:5px;border:1px solid #6d8290;background:#253945;color:#f0f6f8;font-size:11px;font-weight:700;box-shadow:0 2px 0 #0b1318; }
+  .controls { display:none; margin:16px auto 0; width:min(100%,520px); grid-template-columns:1fr 1fr; gap:16px; align-items:center; }
+  .dpad { display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,48px);gap:4px;justify-content:center; }
+  .control-btn { border:1px solid #68808e66;background:linear-gradient(145deg,#314956,#1c303c);color:#e7f2f5;border-radius:12px;box-shadow:0 4px 0 #0b151b, inset 0 1px #ffffff18;font-size:20px;font-weight:800;touch-action:none;user-select:none;-webkit-user-select:none; }
+  .control-btn:active,.control-btn.pressed { transform:translateY(2px);box-shadow:0 2px 0 #0b151b;background:#496574; }
+  .dpad .up {grid-column:2;grid-row:1}.dpad .left {grid-column:1;grid-row:2}.dpad .center {grid-column:2;grid-row:2;background:#1a2a34;color:#718995;font-size:12px}.dpad .right {grid-column:3;grid-row:2}.dpad .down {grid-column:2;grid-row:3}
+  .action-pad { display:flex;justify-content:center;align-items:center;gap:14px; }
+  .fire-btn {width:94px;height:94px;border-radius:50%;font-size:17px;letter-spacing:.08em;background:radial-gradient(circle at 35% 28%,#ffdb79,#e38d2c 75%);color:#38220c;border:2px solid #ffd780;box-shadow:0 6px 0 #8d4c1d,0 10px 22px #0006,inset 0 2px #fff8;}
+  .fire-btn:active,.fire-btn.pressed {transform:translateY(3px);box-shadow:0 3px 0 #8d4c1d,0 6px 12px #0006;}
+  .mobile-hint {display:none;text-align:center;color:var(--muted);font-size:11px;margin-top:10px;}
+  .footer-note {max-width:900px;margin:16px auto 0;color:#78909c;font-size:12px;line-height:1.7;text-align:center;}
+  @media (max-width:700px) {
+    body{padding:12px 8px 22px}.topbar{margin-bottom:10px}.top-tag{display:none}.game-shell{padding:7px;border-radius:13px}.bottomline{font-size:10px;padding:9px 2px 2px}.controls{display:grid}.mobile-hint{display:block}.footer-note{font-size:11px;margin-top:12px}
+    .dpad{grid-template-columns:repeat(3, min(15vw,56px));grid-template-rows:repeat(3, min(12vw,48px))}
+    .fire-btn{width:min(24vw,94px);height:min(24vw,94px)}
+  }
+  @media (min-width:701px) and (pointer:coarse) { .controls{display:grid}.mobile-hint{display:block} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">▣</div>
+      <div><h1>坦克大战</h1><div class="subtitle">BATTLE CITY · ARCADE EDITION</div></div>
+    </div>
+    <div class="top-tag">经典街机玩法 · 单人挑战</div>
+  </header>
+
+  <main class="game-shell">
+    <div class="screen-wrap">
+      <canvas id="game" width="768" height="576" aria-label="坦克大战游戏画面"></canvas>
+      <div class="screen-scan"></div>
+    </div>
+    <div class="bottomline">
+      <div><span class="status-dot"></span><span id="statusText">待机中 · 按 Enter 开始</span></div>
+      <div><span class="kbd">P</span> 暂停　<span class="kbd">R</span> 重开　<span class="kbd">M</span> 音效</div>
+    </div>
+  </main>
+
+  <section class="controls" aria-label="触屏控制">
+    <div class="dpad">
+      <button class="control-btn up" data-dir="up" aria-label="向上">▲</button>
+      <button class="control-btn left" data-dir="left" aria-label="向左">◀</button>
+      <button class="control-btn center" tabindex="-1" aria-hidden="true">MOVE</button>
+      <button class="control-btn right" data-dir="right" aria-label="向右">▶</button>
+      <button class="control-btn down" data-dir="down" aria-label="向下">▼</button>
+    </div>
+    <div class="action-pad"><button class="control-btn fire-btn" id="fireButton">FIRE</button></div>
+  </section>
+  <div class="mobile-hint">按住方向键移动，按住 FIRE 连续射击</div>
+  <p class="footer-note">键盘：方向键 / WASD 移动，Space 射击，P 暂停，R 重新开始，M 切换音效。保护基地鹰标，消灭所有敌方坦克！</p>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const statusText = document.getElementById('statusText');
+  const W = canvas.width, H = canvas.height;
+  const TILE = 32, COLS = 16, ROWS = 16;
+  const OX = 20, OY = 32, FIELD = TILE * COLS;
+  const HUD_X = 556;
+  const DIRS = {
+    up: {x:0,y:-1,a:-Math.PI/2}, right:{x:1,y:0,a:0}, down:{x:0,y:1,a:Math.PI/2}, left:{x:-1,y:0,a:Math.PI}
+  };
+  const KEY_DIR = {ArrowUp:'up',KeyW:'up',ArrowRight:'right',KeyD:'right',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left'};
+  const held = new Set();
+  let state = 'title'; // title, playing, paused, gameover, clear
+  let map = [];
+  let player, enemies, bullets, particles, pickups;
+  let score = 0, lives = 3, stage = 1, enemiesLeft = 0, spawnQueue = 0;
+  let spawnTimer = 0, enemyId = 0, shake = 0, frame = 0, lastTime = 0;
+  let soundOn = false, audioCtx = null;
+  let best = 0;
+  try { best = Number(localStorage.getItem('battleCityBest') || 0); } catch (_) { best = 0; }
+  let notice = '', noticeTimer = 0;
+  const BASE = {c:7,r:15};
+  const PLAYER_SPAWN = {x:OX + 7*TILE + TILE/2, y:OY + 13*TILE + TILE/2};
+
+  const levelRows = [
+    '................',
+    '....BB....BB....',
+    '.B............B..',
+    '....BB....BB....',
+    '....BB....BB....',
+    '.SS..WWWW..SS...',
+    '.SS..WWWW..SS...',
+    '................',
+    '..BB......BB....',
+    '..BB..SS..BB....',
+    '......SS........',
+    '.BB..........BB.',
+    '.BB..WWWW..BB...',
+    '................',
+    '......BBB.......',
+    '................'
+  ];
+
+  function makeMap() {
+    map = levelRows.map(row => [...row].map(ch => ch === 'B' ? {type:'brick', hp:2} : ch === 'S' ? {type:'steel'} : ch === 'W' ? {type:'water'} : null));
+    // The eagle's small brick bunker. It can be damaged by enemy fire.
+    [[6,14],[7,14],[8,14],[6,15],[8,15]].forEach(([c,r]) => map[r][c] = {type:'brick',hp:2});
+  }
+  function tileAt(c,r) { return c<0 || r<0 || c>=COLS || r>=ROWS ? {type:'steel'} : map[r][c]; }
+  function startGame() {
+    score = 0; lives = 3; stage = 1; bullets = []; particles = []; pickups = [];
+    resetStage(); state = 'playing'; statusText.textContent = '作战中 · 保护基地';
+    playTone(440, .07, 'square', .035);
+  }
+  function resetStage() {
+    makeMap(); enemies = []; bullets = []; particles = []; pickups = [];
+    enemiesLeft = 10 + Math.min((stage-1)*2, 8); spawnQueue = enemiesLeft; spawnTimer = .3; enemyId = 0;
+    player = makeTank(PLAYER_SPAWN.x, PLAYER_SPAWN.y, 'up', 'player');
+    player.cooldown = 0; player.invuln = 2.5; player.speed = 150; player.livesShown = lives;
+    notice = `STAGE ${stage}`; noticeTimer = 1.7;
+  }
+  function makeTank(x,y,dir,team,type='normal') {
+    return {x,y,dir,team,type,w:25,h:25,hp:type==='heavy'?2:1,speed:team==='player'?150:(type==='fast'?104:type==='heavy'?54:72),shoot:0,move:0,turn:0,flash:0,invuln:0,id:++enemyId};
+  }
+  function spawnEnemy() {
+    const slots = [OX+TILE*2+16, OX+TILE*7+16, OX+TILE*12+16];
+    const x = slots[Math.floor(Math.random()*slots.length)];
+    const typeRoll = Math.random();
+    const type = stage>=2 && typeRoll>.82 ? 'heavy' : typeRoll>.64 ? 'fast' : 'normal';
+    const e = makeTank(x, OY+16, 'down', 'enemy', type);
+    e.speed += Math.min(stage*3,20); e.shoot=.65+Math.random()*1.1; e.move=.25+Math.random()*1.2; e.turn=Math.random()*2;
+    if (tankBlocked(e,x,e.y)) { e.x = slots[(slots.indexOf(x)+1)%slots.length]; }
+    enemies.push(e); spawnQueue--; spawnTimer = .95 + Math.random()*.55;
+  }
+  function tankRect(t,x=t.x,y=t.y) { return {l:x-t.w/2,r:x+t.w/2,t:y-t.h/2,b:y+t.h/2}; }
+  function rectHitsTile(rect,c,r) {
+    const x=OX+c*TILE, y=OY+r*TILE;
+    return rect.r>x && rect.l<x+TILE && rect.b>y && rect.t<y+TILE;
+  }
+  function tankBlocked(t,x,y) {
+    const rect=tankRect(t,x,y);
+    const c0=Math.floor((rect.l-OX)/TILE), c1=Math.floor((rect.r-OX-.01)/TILE);
+    const r0=Math.floor((rect.t-OY)/TILE), r1=Math.floor((rect.b-OY-.01)/TILE);
+    for(let r=r0;r<=r1;r++) for(let c=c0;c<=c1;c++) {
+      const tile=tileAt(c,r); if(tile && (tile.type==='brick'||tile.type==='steel'||tile.type==='water') && rectHitsTile(rect,c,r)) return true;
+    }
+    // Keep tanks within the battlefield.
+    return rect.l<OX || rect.r>OX+FIELD || rect.t<OY || rect.b>OY+FIELD;
+  }
+  function tanksOverlap(a,b,x=a.x,y=a.y) {
+    return Math.abs(x-b.x)<(a.w+b.w)/2-1 && Math.abs(y-b.y)<(a.h+b.h)/2-1;
+  }
+  function tryMove(t,dir,dt) {
+    const d=DIRS[dir]; t.dir=dir;
+    const nx=t.x+d.x*t.speed*dt, ny=t.y+d.y*t.speed*dt;
+    if(!tankBlocked(t,nx,ny) && !(t.team==='player' ? enemies : [player]).some(o=>o && tanksOverlap(t,o,nx,ny))) {
+      t.x=nx;t.y=ny;return true;
+    }
+    return false;
+  }
+  function shoot(t) {
+    if(t.shoot>0) return;
+    const d=DIRS[t.dir];
+    bullets.push({x:t.x+d.x*17,y:t.y+d.y*17,vx:d.x*330,vy:d.y*330,team:t.team,life:1.6,damage:t.team==='player'?1:1});
+    t.shoot=t.team==='player'?.27:(t.type==='heavy'?1.05:1.35+Math.random()*.5);
+    playTone(t.team==='player'?250:145,.045,'square',.018);
+  }
+  function hitBrick(c,r) {
+    const tile=tileAt(c,r); if(!tile || tile.type!=='brick') return;
+    tile.hp--;
+    if(tile.hp<=0) map[r][c]=null;
+    burst(OX+c*TILE+16, OY+r*TILE+16, '#cf7b3a', 5);
+  }
+  function bulletHitTile(b) {
+    const c=Math.floor((b.x-OX)/TILE), r=Math.floor((b.y-OY)/TILE);
+    const tile=tileAt(c,r);
+    if(tile) {
+      if(tile.type==='brick') hitBrick(c,r);
+      return true;
+    }
+    return false;
+  }
+  function bulletHitsTank(b,t) {
+    return Math.abs(b.x-t.x)<t.w/2+2 && Math.abs(b.y-t.y)<t.h/2+2;
+  }
+  function burst(x,y,color,n=8) {
+    for(let i=0;i<n;i++) { const a=Math.random()*Math.PI*2, s=25+Math.random()*115; particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+Math.random()*.4,color,size:2+Math.random()*3}); }
+  }
+  function damageBase() {
+    state='gameover'; shake=12; burst(OX+BASE.c*TILE+16, OY+BASE.r*TILE+16, '#ffba48', 28);
+    notice='基地被摧毁'; statusText.textContent='任务失败 · 基地已失守'; playTone(90,.5,'sawtooth',.05);
+  }
+  function damagePlayer() {
+    if(player.invuln>0) return;
+    lives--; shake=7; burst(player.x,player.y,'#ffcf6c',12); playTone(110,.2,'sawtooth',.04);
+    if(lives<=0) { state='gameover'; notice='坦克全灭';statusText.textContent='任务失败 · 坦克全灭'; return; }
+    player.x=PLAYER_SPAWN.x;player.y=PLAYER_SPAWN.y;player.dir='up';player.invuln=2.2;player.shoot=.4;
+  }
+  function checkBaseHit(b) {
+    const bx=OX+BASE.c*TILE+16, by=OY+BASE.r*TILE+16;
+    if(Math.abs(b.x-bx)<14 && Math.abs(b.y-by)<14) { if(b.team==='enemy') damageBase(); return true; }
+    return false;
+  }
+  function updateBullets(dt) {
+    for(let i=bullets.length-1;i>=0;i--) {
+      const b=bullets[i]; b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+      let remove=b.life<=0 || b.x<OX || b.x>OX+FIELD || b.y<OY || b.y>OY+FIELD;
+      if(!remove && bulletHitTile(b)) remove=true;
+      if(!remove && checkBaseHit(b)) remove=true;
+      if(!remove) {
+        const targets=b.team==='player'?enemies:(state==='playing'?[player]:[]);
+        for(let j=targets.length-1;j>=0;j--) {
+          const t=targets[j];
+          if(t && bulletHitsTank(b,t)) {
+            remove=true; t.hp--; t.flash=.12;
+            if(t.hp<=0) {
+              burst(t.x,t.y,t.team==='enemy'?'#e87e36':'#f4cf67',12);
+              if(t.team==='enemy') { score += t.type==='heavy'?200:t.type==='fast'?150:100; best=Math.max(best,score); try { localStorage.setItem('battleCityBest',best); } catch (_) {} }
+              if(t.team==='enemy') enemies.splice(j,1);
+              else damagePlayer();
+            } else burst(t.x,t.y,'#f9d27a',5);
+            break;
+          }
+        }
+      }
+      if(remove) bullets.splice(i,1);
+    }
+  }
+  function updateEnemy(e,dt) {
+    e.shoot-=dt;e.move-=dt;e.turn-=dt;
+    if(e.shoot<=0) shoot(e);
+    if(e.move<=0) {
+      const choices=['down','left','right','up'];
+      // Prefer moving toward the player's general area or the base.
+      if(Math.random()<.55) {
+        const targetX=player?player.x:OX+BASE.c*TILE+16;
+        const targetY=player?player.y:OY+BASE.r*TILE+16;
+        const dx=targetX-e.x,dy=targetY-e.y;
+        choices.sort((a,b)=>scoreDir(b,dx,dy)-scoreDir(a,dx,dy));
+      }
+      e.dir=choices[Math.floor(Math.random()*choices.length)];
+      e.move=.55+Math.random()*1.1;
+    }
+    if(!tryMove(e,e.dir,dt)) {
+      const dirs=['up','right','down','left'];
+      e.dir=dirs[Math.floor(Math.random()*4)]; e.move=.3+Math.random()*.5;
+    }
+  }
+  function scoreDir(dir,dx,dy) { const d=DIRS[dir]; return (d.x*Math.sign(dx)+d.y*Math.sign(dy))+(dir==='down'?.15:0); }
+  function update(dt) {
+    if(state!=='playing') return;
+    frame++;
+    if(shake>0) shake=Math.max(0,shake-dt*26);
+    if(noticeTimer>0) noticeTimer-=dt;
+    if(player.invuln>0) player.invuln-=dt;
+    if(player.shoot>0) player.shoot-=dt;
+    // Keyboard / touch movement. Last pressed direction wins.
+    let moveDir=null;
+    for(const d of held) if(d!=='fire') moveDir=d;
+    if(moveDir) tryMove(player,moveDir,dt);
+    if(held.has('fire')) shoot(player);
+    for(const e of enemies) updateEnemy(e,dt);
+    spawnTimer-=dt;
+    if(spawnQueue>0 && enemies.length<4 && spawnTimer<=0) spawnEnemy();
+    updateBullets(dt);
+    for(let i=particles.length-1;i>=0;i--) { const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.96;p.vy*=.96;p.life-=dt;if(p.life<=0)particles.splice(i,1); }
+    if(spawnQueue===0 && enemies.length===0 && bullets.every(b=>b.team==='player')) {
+      state='clear';statusText.textContent='区域肃清 · 按 Enter 进入下一关';notice='区域肃清';playTone(660,.12,'square',.04);setTimeout(()=>playTone(880,.18,'square',.04),130);
+    }
+    if(player.invuln>0 && Math.floor(frame/6)%2===0) { /* blink handled in draw */ }
+  }
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a1116';ctx.fillRect(0,0,W,H);
+    // subtle outer grid
+    ctx.strokeStyle='#182831';ctx.lineWidth=1;
+    for(let x=0;x<W;x+=24){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=24){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    ctx.save();
+    if(shake>0) ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+    ctx.fillStyle='#263c2b';ctx.fillRect(OX-5,OY-5,FIELD+10,FIELD+10);
+    ctx.fillStyle='#142119';ctx.fillRect(OX,OY,FIELD,FIELD);
+    drawMap(); drawBase();
+    // Forest sits visually above tanks and bullets.
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=tileAt(c,r);if(t&&t.type==='forest')drawForest(c,r);}
+    bullets.forEach(drawBullet);
+    enemies.forEach(drawTank);
+    if(player && !(player.invuln>0 && Math.floor(frame/5)%2===0)) drawTank(player);
+    particles.forEach(drawParticle);
+    ctx.restore();
+    drawHud();
+    if(state==='title') drawOverlay('BATTLE CITY','按 Enter 或点击开始','方向键 / WASD 移动 · Space 射击');
+    if(state==='paused') drawOverlay('PAUSED','按 P 继续','战场已暂停');
+    if(state==='gameover') drawOverlay('GAME OVER','按 R 重新开始','基地失守，或你的坦克已全灭');
+    if(state==='clear') drawOverlay('STAGE CLEAR','按 Enter 进入下一关','干得漂亮！准备迎接下一波敌军');
+    if(noticeTimer>0 && state==='playing') {
+      ctx.fillStyle='#101a20dd';rounded(ctx,OX+FIELD/2-72,OY+FIELD/2-20,144,40,8);ctx.fillStyle='#ffd36e';ctx.font='bold 20px monospace';ctx.textAlign='center';ctx.fillText(notice,OX+FIELD/2,OY+FIELD/2+7);
+    }
+  }
+  function drawMap() {
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) {
+      const t=tileAt(c,r),x=OX+c*TILE,y=OY+r*TILE;
+      if(!t) { if((r+c)%2===0){ctx.fillStyle='#17261c';ctx.fillRect(x,y,TILE,TILE);} continue; }
+      if(t.type==='brick') {
+        ctx.fillStyle='#a94f25';ctx.fillRect(x+1,y+1,30,30);
+        ctx.fillStyle='#d77b3d';
+        const rows=t.hp===2?[0,1]:[0];
+        ctx.fillRect(x+2,y+3,13,10);ctx.fillRect(x+17,y+3,13,10);
+        ctx.fillRect(x+2,y+19,13,10);ctx.fillRect(x+17,y+19,13,10);
+        ctx.fillStyle='#7b361e';ctx.fillRect(x+2,y+14,28,3);ctx.fillRect(x+14,y+2,3,12);ctx.fillRect(x+8,y+18,3,12);ctx.fillRect(x+23,y+18,3,12);
+        if(t.hp===1){ctx.fillStyle='#18251b';ctx.fillRect(x+2,y+2,12,12);ctx.fillRect(x+18,y+18,12,12);}
+        ctx.strokeStyle='#6f351f';ctx.strokeRect(x+1.5,y+1.5,29,29);
+      } else if(t.type==='steel') {
+        ctx.fillStyle='#768b93';ctx.fillRect(x+1,y+1,30,30);ctx.fillStyle='#a8b8ba';ctx.fillRect(x+4,y+4,24,24);
+        ctx.fillStyle='#657b84';ctx.fillRect(x+7,y+7,18,18);ctx.fillStyle='#c6d0cd';ctx.fillRect(x+9,y+9,4,4);ctx.fillRect(x+19,y+19,4,4);
+        ctx.strokeStyle='#d0d9d6';ctx.strokeRect(x+2,y+2,28,28);
+      } else if(t.type==='water') {
+        ctx.fillStyle='#1a5274';ctx.fillRect(x,y,TILE,TILE);
+        ctx.strokeStyle='#4b9ac2';ctx.lineWidth=2;
+        const off=(frame%50)/50*16;
+        for(let k=-1;k<3;k++){ctx.beginPath();ctx.moveTo(x+k*16+off,y+9);ctx.quadraticCurveTo(x+k*16+8+off,y+3,x+k*16+16+off,y+9);ctx.stroke();ctx.beginPath();ctx.moveTo(x+k*16+off-8,y+23);ctx.quadraticCurveTo(x+k*16+off,y+17,x+k*16+8+off,y+23);ctx.stroke();}
+      }
+    }
+  }
+  function drawForest(c,r) {
+    const x=OX+c*TILE,y=OY+r*TILE;ctx.fillStyle='#244e2c';ctx.fillRect(x,y,TILE,TILE);
+    ctx.fillStyle='#39753b';ctx.beginPath();ctx.arc(x+11,y+14,10,0,Math.PI*2);ctx.arc(x+21,y+12,9,0,Math.PI*2);ctx.arc(x+16,y+22,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#5b9845';ctx.fillRect(x+9,y+7,4,4);ctx.fillRect(x+20,y+17,4,3);
+  }
+  function drawBase() {
+    const x=OX+BASE.c*TILE,y=OY+BASE.r*TILE;
+    ctx.fillStyle='#e7c15a';ctx.fillRect(x+3,y+3,26,26);ctx.fillStyle='#9b6623';ctx.fillRect(x+5,y+5,22,22);
+    ctx.fillStyle='#ffe17a';ctx.beginPath();ctx.moveTo(x+16,y+7);ctx.lineTo(x+24,y+23);ctx.lineTo(x+8,y+23);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#6b451c';ctx.fillRect(x+14,y+15,4,8);ctx.fillRect(x+11,y+18,10,3);
+    ctx.strokeStyle='#fff0a0';ctx.lineWidth=1.5;ctx.strokeRect(x+2,y+2,28,28);
+  }
+  function drawTank(t) {
+    ctx.save();ctx.translate(t.x,t.y);ctx.rotate(({up:0,right:Math.PI/2,down:Math.PI,left:-Math.PI/2})[t.dir]);
+    const isP=t.team==='player', base=t.type==='heavy'?'#b4b9c0':t.type==='fast'?'#e0bd50':isP?'#e7b84f':'#d95c45';
+    // track belts
+    ctx.fillStyle='#20282a';rounded(ctx,-15,-13,30,8,3);rounded(ctx,-15,5,30,8,3);
+    ctx.fillStyle='#718077';for(let i=-11;i<=10;i+=7){ctx.fillRect(i,-12,3,6);ctx.fillRect(i,6,3,6);}
+    // body
+    ctx.fillStyle=t.flash>0?'#fff':base;rounded(ctx,-11,-12,22,24,5);
+    ctx.fillStyle=isP?'#ffe28a':t.type==='heavy'?'#e4e7e7':'#f28a68';rounded(ctx,-7,-9,14,18,4);
+    ctx.fillStyle='#26312d';rounded(ctx,-6,-6,12,12,4);
+    // turret and barrel
+    ctx.fillStyle=isP?'#f8d16a':t.type==='heavy'?'#d3d9dc':'#ed8061';ctx.beginPath();ctx.arc(0,0,6.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#d4d8d1';rounded(ctx,-2,-17,4,17,2);ctx.fillStyle='#343e3b';ctx.fillRect(-2,-17,4,4);
+    if(t.type==='heavy'){ctx.strokeStyle='#e8eef0';ctx.lineWidth=2;ctx.strokeRect(-9,-10,18,20);}
+    ctx.restore();
+    if(t.team==='enemy'&&t.type==='heavy') {ctx.fillStyle='#1b2021';ctx.fillRect(t.x-12,t.y-20,24,3);ctx.fillStyle='#f5d365';ctx.fillRect(t.x-12,t.y-20,24*(t.hp/2),3);}
+  }
+  function drawBullet(b) {
+    ctx.save();ctx.fillStyle=b.team==='player'?'#fff2a4':'#ff7b62';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(b.x,b.y,3.4,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+  function drawParticle(p) {ctx.globalAlpha=Math.max(0,p.life/.65);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.size,p.size);ctx.globalAlpha=1;}
+  function drawHud() {
+    ctx.fillStyle='#172731';rounded(ctx,HUD_X,OY,192,FIELD,10);ctx.fillStyle='#263c47';rounded(ctx,HUD_X+10,OY+10,172,50,7);
+    ctx.fillStyle='#9bb1bb';ctx.font='bold 11px monospace';ctx.textAlign='left';ctx.fillText('BATTLE CITY',HUD_X+22,OY+29);
+    ctx.fillStyle='#ffce62';ctx.font='bold 19px monospace';ctx.fillText('FIELD  '+String(stage).padStart(2,'0'),HUD_X+22,OY+49);
+    hudLabel('SCORE',HUD_X+20,OY+93);ctx.fillStyle='#f3f6e8';ctx.font='bold 24px monospace';ctx.fillText(String(score).padStart(6,'0'),HUD_X+20,OY+121);
+    hudLabel('BEST',HUD_X+20,OY+153);ctx.fillStyle='#b9d1db';ctx.font='bold 17px monospace';ctx.fillText(String(best).padStart(6,'0'),HUD_X+20,OY+176);
+    ctx.strokeStyle='#38515d';ctx.beginPath();ctx.moveTo(HUD_X+18,OY+195);ctx.lineTo(HUD_X+174,OY+195);ctx.stroke();
+    hudLabel('PLAYER',HUD_X+20,OY+222);
+    for(let i=0;i<3;i++){drawMiniTank(HUD_X+33+(i%2)*48,OY+254+Math.floor(i/2)*31,i<lives);}
+    hudLabel('ENEMIES LEFT',HUD_X+20,OY+321);
+    const total=spawnQueue+enemies.length;
+    ctx.fillStyle='#f1e9d6';ctx.font='bold 22px monospace';ctx.fillText(String(total).padStart(2,'0'),HUD_X+20,OY+350);
+    for(let i=0;i<Math.min(total,10);i++){ctx.fillStyle=i<enemies.length?'#db6751':'#667c82';ctx.fillRect(HUD_X+74+(i%5)*17,OY+333+Math.floor(i/5)*13,11,8);}
+    ctx.strokeStyle='#38515d';ctx.beginPath();ctx.moveTo(HUD_X+18,OY+374);ctx.lineTo(HUD_X+174,OY+374);ctx.stroke();
+    hudLabel('CONTROLS',HUD_X+20,OY+401);
+    ctx.fillStyle='#b4c5cb';ctx.font='12px sans-serif';ctx.fillText('MOVE',HUD_X+20,OY+426);ctx.fillText('WASD / ARROWS',HUD_X+20,OY+443);
+    ctx.fillText('FIRE',HUD_X+20,OY+469);ctx.fillText('SPACE',HUD_X+20,OY+486);
+    ctx.fillStyle='#708993';ctx.font='10px monospace';ctx.fillText('BASE ▲ MUST SURVIVE',HUD_X+20,OY+510);
+    // status lamps
+    ctx.fillStyle=state==='playing'?'#84d65c':state==='paused'?'#f5c85e':'#71878e';ctx.beginPath();ctx.arc(HUD_X+164,OY+31,4,0,Math.PI*2);ctx.fill();
+  }
+  function hudLabel(s,x,y){ctx.fillStyle='#819aa5';ctx.font='bold 10px monospace';ctx.textAlign='left';ctx.fillText(s,x,y);}
+  function drawMiniTank(x,y,on){ctx.globalAlpha=on?1:.22;ctx.fillStyle='#1e292b';ctx.fillRect(x-11,y-10,22,20);ctx.fillStyle='#e7b84f';ctx.fillRect(x-8,y-8,16,16);ctx.fillStyle='#f7db88';ctx.fillRect(x-3,y-13,6,14);ctx.globalAlpha=1;}
+  function drawOverlay(title,line1,line2) {
+    ctx.fillStyle='rgba(4,10,13,.78)';ctx.fillRect(OX,OY,FIELD,FIELD);
+    ctx.textAlign='center';ctx.shadowColor='#ffc857';ctx.shadowBlur=18;ctx.fillStyle='#ffd16a';ctx.font='900 37px monospace';ctx.fillText(title,OX+FIELD/2,OY+205);ctx.shadowBlur=0;
+    ctx.fillStyle='#f2f5e9';ctx.font='bold 16px sans-serif';ctx.fillText(line1,OX+FIELD/2,OY+253);
+    ctx.fillStyle='#9eb2b7';ctx.font='13px sans-serif';ctx.fillText(line2,OX+FIELD/2,OY+281);
+    if(state==='title') {
+      ctx.fillStyle='#2d4650';rounded(ctx,OX+FIELD/2-87,OY+322,174,43,9);ctx.fillStyle='#ffe09a';ctx.font='bold 16px sans-serif';ctx.fillText('▶  开始游戏',OX+FIELD/2,OY+350);
+    }
+  }
+  function rounded(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);c.fill();}
+  function playTone(freq,duration,type='square',volume=.025) {
+    if(!soundOn) return;
+    try { if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(volume,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration); } catch(e){}
+  }
+  function togglePause(){if(state==='playing'){state='paused';statusText.textContent='已暂停 · 按 P 继续';}else if(state==='paused'){state='playing';statusText.textContent='作战中 · 保护基地';}}
+  function nextStage(){stage++;resetStage();state='playing';statusText.textContent='作战中 · 保护基地';}
+  function handleAction(code) {
+    if(code==='Enter') { if(state==='title'||state==='gameover')startGame();else if(state==='clear')nextStage(); }
+    if(code==='KeyR')startGame();
+    if(code==='KeyP'||code==='Escape')togglePause();
+  }
+  window.addEventListener('keydown',e=>{
+    const dir=KEY_DIR[e.code]; if(dir){held.delete(dir);held.add(dir);e.preventDefault();}
+    if(e.code==='Space'){held.add('fire');e.preventDefault();}
+    if(['Enter','KeyR','KeyP','Escape'].includes(e.code)){handleAction(e.code);e.preventDefault();}
+    if(e.code==='KeyM'){soundOn=!soundOn;notice=soundOn?'SOUND ON':'SOUND OFF';noticeTimer=1.1;}
+  });
+  window.addEventListener('keyup',e=>{const dir=KEY_DIR[e.code];if(dir)held.delete(dir);if(e.code==='Space')held.delete('fire');});
+  window.addEventListener('blur',()=>held.clear());
+  canvas.addEventListener('pointerdown',e=>{if(state==='title'){startGame();}else if(state==='gameover'){startGame();}else if(state==='clear'){nextStage();}});
+  document.querySelectorAll('[data-dir]').forEach(btn=>{
+    const dir=btn.dataset.dir;
+    const on=e=>{e.preventDefault();held.add(dir);btn.classList.add('pressed');try{btn.setPointerCapture(e.pointerId);}catch(_){};};
+    const off=e=>{e.preventDefault();held.delete(dir);btn.classList.remove('pressed');};
+    btn.addEventListener('pointerdown',on);btn.addEventListener('pointerup',off);btn.addEventListener('pointercancel',off);btn.addEventListener('lostpointercapture',off);
+  });
+  const fireBtn=document.getElementById('fireButton');
+  fireBtn.addEventListener('pointerdown',e=>{e.preventDefault();held.add('fire');fireBtn.classList.add('pressed');try{fireBtn.setPointerCapture(e.pointerId);}catch(_){};});
+  const stopFire=e=>{e.preventDefault();held.delete('fire');fireBtn.classList.remove('pressed');};
+  fireBtn.addEventListener('pointerup',stopFire);fireBtn.addEventListener('pointercancel',stopFire);fireBtn.addEventListener('lostpointercapture',stopFire);
+
+  function loop(ts){const dt=Math.min((ts-lastTime)/1000||0,.033);lastTime=ts;update(dt);draw();requestAnimationFrame(loop);}
+  makeMap(); player=makeTank(PLAYER_SPAWN.x,PLAYER_SPAWN.y,'up','player'); enemies=[];bullets=[];particles=[];pickups=[];
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
