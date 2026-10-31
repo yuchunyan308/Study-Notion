@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>诺基亚贪吃蛇</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 20%,#2a3140,#0e1016);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:14px;font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#phone{--p:4px;width:fit-content;padding:16px 26px 28px;border-radius:44px 44px 60px 60px;background:linear-gradient(160deg,#4a7cc0,#27498a 55%,#182f5c);box-shadow:inset 0 2px 3px #fff5,inset 0 -6px 12px #0006,0 0 0 2px #0a1830,0 24px 50px #000a;display:flex;flex-direction:column;align-items:center;gap:10px}
+.spk{display:block;width:54px;height:6px;border-radius:3px;background:#0b1630;box-shadow:inset 0 1px 2px #000,0 1px 0 #ffffff30}
+.brand{color:#dfe8f7;font-weight:700;letter-spacing:.3em;font-size:15px;text-shadow:0 1px 1px #0008}
+.bezel{background:#191c19;border-radius:16px;padding:12px;box-shadow:inset 0 2px 6px #000,0 1px 0 #ffffff33}
+#lcd{position:relative;width:calc(84*var(--p));height:calc(48*var(--p));background:linear-gradient(#a6bb8f,#94ab81);box-shadow:inset 0 0 14px #3b4d2e99;border-radius:2px;overflow:hidden}
+#lcd::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(20,35,15,.1) 1px,transparent 1px) 0 0/var(--p) var(--p),linear-gradient(90deg,rgba(20,35,15,.1) 1px,transparent 1px) 0 0/var(--p) var(--p)}
+#c{width:100%;height:100%;display:block;image-rendering:pixelated;filter:drop-shadow(calc(var(--p)*.4) calc(var(--p)*.4) 0 rgba(30,45,25,.3))}
+.nav{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0 4px}
+.rock{display:flex;flex-direction:column;gap:4px}
+button{font:inherit;cursor:pointer;color:#1d2530;border:0;background:linear-gradient(#f0f3f5,#b3bcc5);box-shadow:0 2px 0 #6c7885,0 4px 6px #0006,inset 0 1px 0 #fff;border-radius:18px}
+button:active{transform:translateY(2px);box-shadow:0 0 0 #6c7885,inset 0 1px 3px #0005}
+.soft{width:70px;height:30px;font-size:13px;font-weight:700}
+.rock button{width:56px;height:20px;font-size:11px;border-radius:10px}
+.keys{display:grid;grid-template-columns:repeat(3,76px);gap:8px 10px}
+.keys button{height:36px;font-size:17px;font-weight:700;border-radius:18px/14px;line-height:1}
+.keys small{display:block;font-size:8px;font-weight:600;color:#556;margin-top:1px}
+.tip{margin:0;color:#8f9bb0;font-size:13px;text-align:center;line-height:1.7}
+</style></head>
+<body>
+<div id="phone">
+ <i class="spk"></i><div class="brand">NOKIA</div>
+ <div class="bezel"><div id="lcd"><canvas id="c" width="84" height="48"></canvas></div></div>
+ <div class="nav"><button class="soft" data-k="ok">选择</button><div class="rock"><button data-k="up">▲</button><button data-k="down">▼</button></div><button class="soft" data-k="c">C</button></div>
+ <div class="keys">
+  <button data-k="none">1</button><button data-k="up">2<small>ABC</small></button><button data-k="none">3<small>DEF</small></button>
+  <button data-k="left">4<small>GHI</small></button><button data-k="ok">5<small>JKL</small></button><button data-k="right">6<small>MNO</small></button>
+  <button data-k="none">7<small>PQRS</small></button><button data-k="down">8<small>TUV</small></button><button data-k="none">9<small>WXYZ</small></button>
+  <button data-k="none">*</button><button data-k="none">0</button><button data-k="snd">#</button>
+ </div>
+</div>
+<p class="tip">键盘：方向键 / WASD / 数字 2468 控制方向，Enter 或 5 确认，C 或 Esc 暂停/返回，M 或 # 开关音效<br>规则：无迷宫时蛇可从墙的一侧穿到另一侧；每吃 5 个食物会出现限时的奖励虫子。</p>
+<script>
+const $=id=>document.getElementById(id);
+const C=$('c'),X=C.getContext('2d'),CS=3,GW=27,GH=12,OX=1,OY=10,INK='#26331f';
+const F={A:[2,5,7,5,5],B:[6,5,6,5,6],C:[3,4,4,4,3],D:[6,5,5,5,6],E:[7,4,6,4,7],F:[7,4,6,4,4],G:[3,4,5,5,3],H:[5,5,7,5,5],I:[7,2,2,2,7],J:[1,1,1,5,2],K:[5,5,6,5,5],L:[4,4,4,4,7],M:[5,7,7,5,5],N:[6,5,5,5,5],O:[2,5,5,5,2],P:[6,5,6,4,4],Q:[2,5,5,7,3],R:[6,5,6,5,5],S:[3,4,2,1,6],T:[7,2,2,2,2],U:[5,5,5,5,7],V:[5,5,5,5,2],W:[5,5,7,7,5],X:[5,5,2,5,5],Y:[5,5,2,2,2],Z:[7,1,2,4,7],
+0:[7,5,5,5,7],1:[2,6,2,2,7],2:[6,1,2,4,7],3:[6,1,2,1,6],4:[5,5,7,1,1],5:[7,4,6,1,6],6:[3,4,7,5,7],7:[7,1,2,2,2],8:[7,5,7,5,7],9:[7,5,7,1,6],'-':[0,0,7,0,0],':':[0,2,0,2,0],'<':[1,2,4,2,1],'>':[4,2,1,2,4]};
+const MZ=[
+ (x,y)=>0,
+ (x,y)=>x==0||y==0||x==GW-1||y==GH-1,
+ (x,y)=>(x==8||x==18)&&(y<4||y>7),
+ (x,y)=>x%6==3&&y%4==1,
+ (x,y)=>x==13&&(y<5||y>7),
+ (x,y)=>x==0||y==0||x==GW-1||y==GH-1||(x==13&&(y<4||y>7))];
+let st='menu',row=0,level=5,maze=0,snake,dir,q,grow,food,bonus,score,eaten,wl,acc=0,dieT=0,t=0,best={},newHi=false,sound=true;
+try{best=JSON.parse(localStorage.getItem('nokiaSnakeBest')||'{}')}catch(e){}
+const bk=()=>maze+'-'+level,hi=()=>best[bk()]||0;
+
+let ac;function beep(f,d=.07,v=.04){if(!sound)return;try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+
+/* ---------- 像素绘制 ---------- */
+function txt(s,x,y,k=1){s=String(s);for(const ch of s){const g=F[ch];if(g)g.forEach((r,i)=>{for(let b=0;b<3;b++)if(r&(4>>b))X.fillRect(x+b*k,y+i*k,k,k)});x+=4*k}}
+const cx=x=>OX+x*CS,cy=y=>OY+y*CS;
+function blk(x,y){X.fillRect(cx(x),cy(y),CS,CS)}
+function food3(x,y){const a=cx(x),b=cy(y);X.fillRect(a+1,b,1,3);X.fillRect(a,b+1,3,1)}
+function bug(x,y){const a=cx(x),b=cy(y);X.fillRect(a+1,b,1,1);X.fillRect(a,b+1,3,1);X.fillRect(a,b+2,1,1);X.fillRect(a+2,b+2,1,1)}
+function frame(){X.fillRect(0,9,83,1);X.fillRect(0,46,83,1);X.fillRect(0,9,1,38);X.fillRect(82,9,1,38)}
+function drawPlay(showSnake=true){
+ txt(score,1,2);
+ if(bonus){X.fillRect(50,2,1,5);X.fillRect(80,2,1,5);X.fillRect(50,2,31,1);X.fillRect(50,6,31,1);X.fillRect(52,4,Math.round(bonus.left/40*27),1)}
+ else txt('L'+level,70,2);
+ frame();
+ for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(wl[y][x])blk(x,y);
+ if(food&&(Math.floor(t/350)%2==0||st!='play'))food3(food.x,food.y);else if(food)food3(food.x,food.y);
+ if(bonus)bug(bonus.x,bonus.y);
+ if(showSnake)snake.forEach((s,i)=>{blk(s.x,s.y);if(i==0){X.clearRect(cx(s.x)+1,cy(s.y)+1,1,1)}})}
+function draw(){X.clearRect(0,0,84,48);X.fillStyle=INK;
+ if(st=='menu'){txt('SNAKE II',10,2,2);X.fillRect(0,14,84,1);
+  ['LEVEL <'+level+'>','MAZE <'+maze+'>','START'].forEach((s,i)=>{txt(s,10,20+i*8,1);if(i==row)txt('>',3,20+i*8)});
+  txt('HI '+hi(),10,43);
+  X.fillRect(53,19,29,1);X.fillRect(53,32,29,1);X.fillRect(53,19,1,14);X.fillRect(81,19,1,14);
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(MZ[maze](x,y))X.fillRect(54+x,20+y,1,1)}
+ else if(st=='play')drawPlay();
+ else if(st=='pause'){txt('PAUSE',22,6,2);txt('OK GO',30,26);txt('C MENU',26,36)}
+ else if(st=='dying')drawPlay(Math.floor(dieT/140)%2==0);
+ else{txt('GAME OVER',6,4,2);txt('SCORE '+score,20,22);txt(newHi?'NEW HI '+score:'HI '+hi(),20,31);if(Math.floor(t/500)%2==0)txt('OK MENU',24,41)}}
+
+/* ---------- 游戏逻辑 ---------- */
+const tickMs=()=>215-17*level;
+function cellFree(x,y){return!wl[y][x]&&!snake.some(s=>s.x==x&&s.y==y)&&!(food&&food.x==x&&food.y==y)&&!(bonus&&bonus.x==x&&bonus.y==y)}
+function rnd(){for(let k=0;k<400;k++){const x=Math.random()*GW|0,y=Math.random()*GH|0;if(cellFree(x,y))return{x,y}}return null}
+function start(){wl=Array.from({length:GH},(_,y)=>Array.from({length:GW},(_,x)=>!!MZ[maze](x,y)));
+ snake=[5,4,3,2].map(x=>({x,y:6}));dir={x:1,y:0};q=[];grow=0;score=0;eaten=0;bonus=null;food=null;food=rnd();acc=0;newHi=false;st='play';beep(660,.08)}
+function die(){st='dying';dieT=0;beep(220,.15);setTimeout(()=>beep(150,.2),150);setTimeout(()=>beep(100,.3),320)}
+function step(){if(q.length)dir=q.shift();const h=snake[0],nx=(h.x+dir.x+GW)%GW,ny=(h.y+dir.y+GH)%GH;
+ const body=grow>0?snake:snake.slice(0,-1);
+ if(wl[ny][nx]||body.some(s=>s.x==nx&&s.y==ny))return die();
+ snake.unshift({x:nx,y:ny});if(grow>0)grow--;else snake.pop();
+ if(bonus&&--bonus.left<=0)bonus=null;
+ if(food&&nx==food.x&&ny==food.y){score+=5+level*2;grow++;eaten++;food=null;food=rnd();beep(880,.06);
+  if(eaten%5==0&&!bonus){const c=rnd();if(c)bonus={...c,left:40}}}
+ else if(bonus&&nx==bonus.x&&ny==bonus.y){score+=Math.ceil(bonus.left/2)*level;bonus=null;beep(660,.06);setTimeout(()=>beep(990,.1),70)}
+ if(score>hi()){best[bk()]=score;newHi=true;try{localStorage.setItem('nokiaSnakeBest',JSON.stringify(best))}catch(e){}}}
+function turn(dx,dy){const l=q.length?q[q.length-1]:dir;if((l.x==-dx&&l.y==-dy)||(l.x==dx&&l.y==dy)||q.length>=2)return;q.push({x:dx,y:dy})}
+function press(k){
+ if(k=='snd'){sound=!sound;beep(500,.05);return}
+ if(st=='menu'){
+  if(k=='up'){row=(row+2)%3;beep(300,.03)}else if(k=='down'){row=(row+1)%3;beep(300,.03)}
+  else if(k=='left'||k=='right'){const d=k=='left'?-1:1;if(row==0)level=(level-1+d+9)%9+1;else if(row==1)maze=(maze+d+6)%6;beep(420,.03)}
+  else if(k=='ok')start()}
+ else if(st=='play'){
+  if(k=='up')turn(0,-1);else if(k=='down')turn(0,1);else if(k=='left')turn(-1,0);else if(k=='right')turn(1,0);
+  else if(k=='c'||k=='ok'){st='pause';beep(400,.05)}}
+ else if(st=='pause'){if(k=='ok'){st='play';beep(600,.05)}else if(k=='c')st='menu'}
+ else if(st=='over'){if(k=='ok'||k=='c'){st='menu';beep(500,.05)}}}
+function loop(ts){const dt=Math.min(60,ts-(loop.l||ts));loop.l=ts;t=ts;
+ if(st=='play'){acc+=dt;const m=tickMs();while(acc>=m&&st=='play'){acc-=m;step()}}
+ else if(st=='dying'){dieT+=dt;if(dieT>1100)st='over'}
+ draw();requestAnimationFrame(loop)}
+
+/* ---------- 输入与适配 ---------- */
+const KEYS={ArrowUp:'up',w:'up',W:'up',2:'up',ArrowDown:'down',s:'down',S:'down',8:'down',ArrowLeft:'left',a:'left',A:'left',4:'left',ArrowRight:'right',d:'right',D:'right',6:'right',Enter:'ok',' ':'ok',5:'ok',c:'c',C:'c',Escape:'c',Backspace:'c',m:'snd',M:'snd','#':'snd'};
+addEventListener('keydown',e=>{const k=KEYS[e.key];if(!k)return;e.preventDefault();if(!e.repeat)press(k)});
+document.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();press(b.dataset.k)}));
+let sx,sy;addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{if(sx==null||st!='play')return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;
+ if(Math.max(Math.abs(dx),Math.abs(dy))<28)return;Math.abs(dx)>Math.abs(dy)?turn(Math.sign(dx),0):turn(0,Math.sign(dy))},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&st=='play')st='pause'});
+function fit(){const s=Math.max(2,Math.min(4,Math.floor((innerWidth-120)/84)));$('phone').style.setProperty('--p',s+'px')}
+addEventListener('resize',fit);fit();
+wl=Array.from({length:GH},()=>Array(GW).fill(false));snake=[];
+requestAnimationFrame(loop);
+</script></body></html>
