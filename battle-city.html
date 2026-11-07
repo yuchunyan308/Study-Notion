@@ -11,28 +11,33 @@ canvas{width:min(96vw,calc((100vh - 90px)*480/416),960px);aspect-ratio:480/416;i
 #pad .dp{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,54px);gap:4px}
 #pad button{font-size:22px;background:#2a2a2a;color:#ddd;border:1px solid #555;border-radius:10px}
 #pad .fire{width:88px;height:88px;border-radius:50%;background:#a33;font-size:16px;font-weight:700}
+#bar,#ed{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:96vw}#ed{display:none}
+#bar button,#ed button{font:inherit;font-size:13px;color:#ddd;background:#2a2a2a;border:1px solid #555;border-radius:8px;padding:6px 11px;cursor:pointer}#ed button.on{border-color:#e8a020;color:#ffd23a}
 @media (pointer:coarse){#pad{display:flex}}
 </style></head>
 <body>
 <canvas id="c" width="480" height="416"></canvas>
+<div id="bar"><button id="b1">新游戏</button><button id="b2">关卡编辑器 (E)</button><button id="b3">自定义关卡 (C)</button></div>
+<div id="ed"><button data-t="0">1 空地</button><button data-t="1">2 砖墙</button><button data-t="2">3 钢墙</button><button data-t="3">4 水面</button><button data-t="4">5 树林</button><button data-t="5">6 冰面</button>
+<button id="e1">试玩 (Enter)</button><button id="e2">保存 (S)</button><button id="e3">清空</button><button id="e4">载入模板</button><button id="e5">导出/导入</button><button id="e6">返回 (Esc)</button></div>
 <div id="pad"><div class="dp"><span></span><button data-d="0">▲</button><span></span><button data-d="3">◀</button><span></span><button data-d="1">▶</button><span></span><button data-d="2">▼</button><span></span></div><button class="fire" id="fb">开火</button></div>
-<p class="tip">方向键 / WASD 移动，空格 / J 开火，P 暂停，Enter 开始<br>保护底部的老鹰基地，消灭每关 20 辆敌方坦克。红色闪烁的坦克被击中会掉落道具。</p>
+<p class="tip">方向键 / WASD 移动，空格 / J 开火，P 暂停，Enter 开始<br>保护底部的老鹰基地，消灭每关 20 辆敌方坦克。红色闪烁的坦克被击中会掉落道具，冰面会让坦克打滑。<br>编辑器：左键画、右键擦，数字键 1-6 切换笔刷，Enter 试玩，S 保存。</p>
 <script>
 const cv=document.getElementById('c'),X=cv.getContext('2d');
 const DX=[0,1,0,-1],DY=[-1,0,1,0],MAPS=[[
- '.............','.B.B.B.B.B.B.','.B.B.B.B.B.B.','.B.B.BSB.B.B.','.B.B.B.B.B.B.','.B.BWWWWWB.B.','.....F.F.....','SB.BB...BB.BS','.B.B..B..B.B.','.B.B.B.B.B.B.','.B.B.B.B.B.B.','.....BBB.....','.....B.B.....'],[
+ '.............','.B.B.B.B.B.B.','.B.B.B.B.B.B.','.B.B.BSB.B.B.','.B.B.B.B.B.B.','.B.BWWWWWB.B.','IIIIIF.FIIIII','SB.BB...BB.BS','.B.B..B..B.B.','.B.B.B.B.B.B.','.B.B.B.B.B.B.','.....BBB.....','.....B.B.....'],[
  '.............','.S.B...B.S.B.','.S.B.W.B.S.B.','...B.W.B.....','BB.B.W.B.BB.B','.....W.......','.BBB.F.F.BBB.','.B.......B...','.B.SS.SS.B.B.','...B.F.B.....','.B.B.B.B.B.B.','.....BBB.....','.....B.B.....'],[
- '.............','.BB.S...S.BB.','.BB.S...S.BB.','.....BBB.....','SS.W.....W.SS','...W.BSB.W...','.B.W.BSB.W.B.','.B.......B...','.BBB.FFF.BBB.','.....FFF.....','.B.S.....S.B.','.....BBB.....','.....B.B.....']];
+ '.............','.BB.S...S.BB.','.BB.S...S.BB.','.....BBB.....','SS.W.....W.SS','...W.BSB.W...','.B.W.BSB.W.B.','.B.......B...','.BBB.FFF.BBB.','IIII.FFF.IIII','.B.S.....S.B.','.....BBB.....','.....B.B.....']];
 let st='title',grid,tanks,bullets,ups,parts,queue,pl,stage=0,score=0,lives=3,star=0,baseAlive=true,spawnT=0,spawnIdx=0,respT=0,msgT=0,frame=0,hd=[],fireHeld=false,hi=0;
 try{hi=+localStorage.getItem('bcHi')||0}catch(e){}
 let ac;function beep(f,d=.06,ty='square',v=.04){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
 
 /* ---------- 关卡 ---------- */
 function genQueue(n){const a=Math.min(.06+.06*n,.3),q=[];for(let i=0;i<20;i++){const r=Math.random();q.push({ty:r<a?'armor':r<a+.18?'fast':r<a+.33?'power':'basic',flash:[3,10,17].includes(i)})}return q}
-function loadStage(n){grid=new Uint8Array(676);
- MAPS[n%3].forEach((row,ty)=>[...row].forEach((ch,tx)=>{const v={B:1,S:2,W:3,F:4}[ch]||0;if(v)for(let a=0;a<2;a++)for(let b=0;b<2;b++)grid[(ty*2+b)*26+tx*2+a]=v}));
+function buildGrid(m){const g=new Uint8Array(676);m.forEach((row,ty)=>[...row].forEach((ch,tx)=>{const v={B:1,S:2,W:3,F:4,I:5}[ch]||0;if(v)for(let a=0;a<2;a++)for(let b=0;b<2;b++)g[(ty*2+b)*26+tx*2+a]=v}));return g}
+function loadStage(n){grid=buildGrid(custom||MAPS[n%3]);
  tanks=[];bullets=[];ups=[];parts=[];baseAlive=true;queue=genQueue(n);spawnT=60;spawnIdx=0;pl=null;spawnPlayer()}
-function newGame(){stage=0;score=0;lives=3;star=0;loadStage(0);st='play';beep(500,.1)}
+function newGame(c){if(st=='over'&&custom&&!c)return exitCustom();custom=c||null;stage=0;score=0;lives=3;star=0;loadStage(0);st='play';ui();beep(500,.1)}
 function spawnPlayer(){pl={x:128,y:384,d:0,player:true,spawn:0,shield:180,cool:0,anim:0,hp:1,acc:0};tanks.push(pl)}
 function aliveEnemies(){return tanks.filter(t=>!t.player).length}
 function spawnEnemy(){const x=[0,192,384][spawnIdx%3];if(blocked({},x,0)){spawnT=20;return}spawnIdx++;
@@ -75,9 +80,9 @@ function ai(t){if(t.spawn>0){t.spawn--;return}
  if(!moveTank(t,t.dir,t.spd))t.think=0;
  if(--t.cool<=0&&Math.random()<.03){fire(t);t.cool=40+Math.random()*60}}
 function update(){frame++;
- if(st=='clear'){if(--msgT<=0){stage++;loadStage(stage);st='play'}return}
+ if(st=='clear'){if(--msgT<=0){if(custom)exitCustom();else{stage++;loadStage(stage);st='play'}}return}
  if(st!='play')return;
- if(pl){if(pl.shield>0)pl.shield--;const d=hd.length?hd[hd.length-1]:-1;if(d>=0)moveTank(pl,d,2);pl.cool--;if(fireHeld&&pl.cool<=0)fire(pl)}
+ if(pl){if(pl.shield>0)pl.shield--;const d=hd.length?hd[hd.length-1]:-1;const ic=grid[((pl.y+16)>>4)*26+((pl.x+16)>>4)]==5;if(d>=0){moveTank(pl,d,2);if(ic)pl.sl=24}else if(ic&&pl.sl>0){pl.sl--;moveTank(pl,pl.d,pl.sl>8?2:1)}else pl.sl=0;pl.cool--;if(fireHeld&&pl.cool<=0)fire(pl)}
  else if(--respT<=0)spawnPlayer();
  tanks.forEach(t=>{if(!t.player)ai(t)});
  if(--spawnT<=0&&queue.length&&aliveEnemies()<4)spawnEnemy();
@@ -94,6 +99,7 @@ function update(){frame++;
 function brick(x,y){X.fillStyle='#4a2410';X.fillRect(x,y,16,16);X.fillStyle='#c0582c';for(let r=0;r<4;r++){const o=r%2?0:4;X.fillRect(x+(r%2?1:0),y+r*4+1,r%2?7:7,3);X.fillRect(x+8+(r%2?0:0),y+r*4+1,7,3)}X.fillStyle='#e08a58';for(let r=0;r<4;r++)X.fillRect(x+(r%2?1:0),y+r*4+1,7,1)}
 function steel(x,y){X.fillStyle='#6e7378';X.fillRect(x,y,16,16);X.fillStyle='#d0d4d8';X.fillRect(x+1,y+1,14,14);X.fillStyle='#8e949a';X.fillRect(x+4,y+4,8,8);X.fillStyle='#f4f6f8';X.fillRect(x+5,y+5,6,6)}
 function water(x,y){X.fillStyle='#1d4fc0';X.fillRect(x,y,16,16);X.fillStyle='#5a8aff';const o=(frame>>4)%2*4;for(let i=0;i<4;i++)X.fillRect(x+(i*4+o)%16,y+2+i*4,4,2)}
+function ice(x,y){X.fillStyle='#bfe6ff';X.fillRect(x,y,16,16);X.fillStyle='#eaf8ff';X.fillRect(x,y,16,2);X.fillRect(x,y,2,16);X.fillStyle='#8cc4ea';X.fillRect(x+4,y+6,6,2);X.fillRect(x+9,y+11,5,2);X.fillRect(x+14,y,2,16)}
 function forest(x,y){X.fillStyle='#1f8a2a';X.fillRect(x,y,16,16);X.fillStyle='#0e5a1a';for(let i=0;i<8;i++)X.fillRect(x+(i*5)%14,y+(i*7)%14,3,3);X.fillStyle='#46c24f';for(let i=0;i<5;i++)X.fillRect(x+(i*7+2)%14,y+(i*3+5)%14,2,2)}
 function tcol(t){if(t.player)return['#e8c820','#b09010','#4a3a08','#8a7418'];
  if(t.flash&&frame%20<10)return['#e83030','#901818','#401010','#802020'];
@@ -107,7 +113,7 @@ function drawTank(t){if(t.spawn>0){const s=4+(frame>>2)%4*3;X.fillStyle='#fff';X
 function drawIcon(u){X.fillStyle='#ddd';X.fillRect(u.x,u.y,32,32);X.fillStyle='#c22';X.fillRect(u.x+2,u.y+2,28,28);X.fillStyle='#fff';X.font='bold 20px sans-serif';X.textAlign='center';X.fillText({star:'★',life:'♥',shield:'◆',bomb:'✸'}[u.ty],u.x+16,u.y+24)}
 function txt(s,x,y,sz=16,col='#fff',al='center'){X.font=`bold ${sz}px "Courier New",monospace`;X.fillStyle=col;X.textAlign=al;X.fillText(s,x,y)}
 function draw(){X.fillStyle='#000';X.fillRect(0,0,480,416);
- for(let y=0;y<26;y++)for(let x=0;x<26;x++){const v=grid?grid[y*26+x]:0;if(v==1)brick(x*16,y*16);else if(v==2)steel(x*16,y*16);else if(v==3)water(x*16,y*16)}
+ for(let y=0;y<26;y++)for(let x=0;x<26;x++){const v=grid?grid[y*26+x]:0;if(v==1)brick(x*16,y*16);else if(v==2)steel(x*16,y*16);else if(v==3)water(x*16,y*16);else if(v==5)ice(x*16,y*16)}
  if(grid){X.fillStyle=baseAlive?'#c8c8c8':'#333';X.fillRect(196,388,24,24);if(baseAlive){X.fillStyle='#e8c820';X.fillRect(200,392,16,16);X.fillStyle='#000';X.fillRect(206,396,4,6);X.fillRect(202,402,12,2)}else{X.fillStyle='#555';X.fillRect(200,400,16,8)}
   ups.forEach(u=>{if(u.t>180||frame%10<6)drawIcon(u)});tanks.forEach(drawTank);
   X.fillStyle='#eee';bullets.forEach(b=>X.fillRect(b.x-2,b.y-2,4,4));
@@ -116,18 +122,42 @@ function draw(){X.fillStyle='#000';X.fillRect(0,0,480,416);
  X.fillStyle='#636363';X.fillRect(416,0,64,416);
  if(queue)for(let i=0;i<queue.length;i++){const x=424+(i%2)*20,y=14+(i>>1)*12;X.fillStyle='#222';X.fillRect(x,y,12,10);X.fillStyle='#ddd';X.fillRect(x+2,y+1,8,8)}
  txt('1P',448,286,14,'#111');txt('♥ '+Math.max(0,lives),448,306,15,'#111');txt('STAGE',448,350,12,'#111');txt(stage+1,448,372,20,'#111');txt('HI '+hi,448,400,11,'#111');
- txt(score,12,16,12,'#8f8','left');
- if(st=='title'){X.fillStyle='rgba(0,0,0,.82)';X.fillRect(0,0,480,416);txt('BATTLE',240,140,48,'#e8a020');txt('CITY',240,190,48,'#e8a020');txt('按 Enter / 点击 开始',240,260,18);txt('最高分 '+hi,240,290,14,'#aaa')}
+ if(st=='edit')drawEdit();else txt(score,12,16,12,'#8f8','left');
+ if(st=='title'){X.fillStyle='rgba(0,0,0,.82)';X.fillRect(0,0,480,416);txt('BATTLE',240,140,48,'#e8a020');txt('CITY',240,190,48,'#e8a020');txt('按 Enter / 点击 开始',240,260,18);txt('最高分 '+hi,240,290,14,'#aaa');txt('E 关卡编辑器　　C 自定义关卡',240,325,14,'#8cf')}
  else if(st=='over'){X.fillStyle='rgba(0,0,0,.6)';X.fillRect(0,150,416,110);txt('GAME OVER',208,200,36,'#e33');txt('得分 '+score+'，按 Enter 重新开始',208,235,15)}
  else if(st=='pause'){X.fillStyle='rgba(0,0,0,.6)';X.fillRect(0,0,416,416);txt('PAUSE',208,215,36)}
  else if(st=='clear')txt('STAGE '+(stage+1)+' CLEAR',208,215,30,'#ffd23a')}
+/* ---------- 关卡编辑器 ---------- */
+let custom=null,ed=null,tile=1,fromEdit=false,painting=0,tplI=0;
+const TC='.BSWFI',TN=['空地','砖墙','钢墙','水面','树林','冰面'],$=id=>document.getElementById(id);
+const tpl=i=>MAPS[i].map(r=>[...r]),clearEd=()=>Array.from({length:13},(_,y)=>[...(y==11?'.....BBB.....':y==12?'.....B.B.....':'.............')]);
+function edSync(){ed[0][0]=ed[0][6]=ed[0][12]=ed[12][4]=ed[12][6]='.';grid=buildGrid(ed.map(r=>r.join('')))}
+function ld(){try{return localStorage.getItem('bcCustom')}catch(e){return null}}
+function ui(){$('ed').style.display=st=='edit'?'flex':'none';$('bar').style.display=st=='edit'?'none':'flex';document.querySelectorAll('#ed [data-t]').forEach(b=>b.classList.toggle('on',+b.dataset.t==tile))}
+function openEdit(keep){if(!keep||!ed){const s=ld();ed=s?s.split('|').map(r=>[...r]):clearEd()}tanks=[];bullets=[];ups=[];parts=[];queue=[];baseAlive=true;edSync();st='edit';ui()}
+function exitCustom(){custom=null;if(fromEdit)openEdit(true);else{st='title';ui()}}
+function playCustom(){const s=ld();if(!s){alert('还没有保存的自定义关卡，请先在编辑器里画一张并点“保存”。');return}fromEdit=false;newGame(s.split('|'))}
+function testEdit(){edSync();fromEdit=true;newGame(ed.map(r=>r.join('')))}
+function saveEd(){try{localStorage.setItem('bcCustom',ed.map(r=>r.join('')).join('|'));alert('已保存。回到首页按 C 或点“自定义关卡”即可游玩。')}catch(e){alert('保存失败')}}
+function paint(e,erase){const r=cv.getBoundingClientRect(),tx=Math.floor((e.clientX-r.left)*480/r.width/32),ty=Math.floor((e.clientY-r.top)*416/r.height/32);
+ if(tx<0||tx>12||ty<0||ty>12)return;ed[ty][tx]=erase?'.':TC[tile];edSync()}
+function editKey(k,e){if(k>='1'&&k<='6'){tile=+k-1;ui()}else if(k=='Enter'||k=='t'||k=='T'){e.preventDefault();testEdit()}else if(k=='s'||k=='S')saveEd();else if(k=='Escape'){st='title';ui()}}
+function drawEdit(){X.strokeStyle='rgba(255,255,255,.13)';X.lineWidth=1;X.beginPath();for(let i=1;i<13;i++){X.moveTo(i*32+.5,0);X.lineTo(i*32+.5,416);X.moveTo(0,i*32+.5);X.lineTo(416,i*32+.5)}X.stroke();
+ X.lineWidth=2;X.strokeStyle='#d33';[0,6,12].forEach(x=>{X.strokeRect(x*32+5,5,22,22);txt('E',x*32+16,23,15,'#d33')});X.strokeStyle='#ee3';X.strokeRect(133,389,22,22);txt('P',144,407,15,'#ee3');
+ X.fillStyle='#636363';X.fillRect(416,0,64,416);txt('EDIT',448,30,16,'#111');txt('笔刷',448,64,13,'#111');txt(TN[tile],448,86,15,'#111');
+ ['1-6 切换','右键擦除','Enter 试玩','S 保存','Esc 返回'].forEach((t,i)=>txt(t,448,120+i*18,11,'#111'))}
+$('b1').onclick=()=>newGame();$('b2').onclick=()=>openEdit();$('b3').onclick=playCustom;
+document.querySelectorAll('#ed [data-t]').forEach(b=>b.onclick=()=>{tile=+b.dataset.t;ui()});
+$('e1').onclick=testEdit;$('e2').onclick=saveEd;$('e3').onclick=()=>{ed=clearEd();edSync()};$('e4').onclick=()=>{ed=tpl(tplI++%3);edSync()};$('e6').onclick=()=>{st='title';ui()};
+$('e5').onclick=()=>{const code=ed.map(r=>r.join('')).join('|'),c=prompt('地图代码（复制可保存分享；粘贴新代码后点确定即可导入）',code);
+ if(c&&c!=code){const rows=c.trim().split('|');if(rows.length==13&&rows.every(r=>r.length==13&&/^[.BSWFI]+$/.test(r))){ed=rows.map(r=>[...r]);edSync()}else alert('代码格式不正确')}};
 let last=0,acc=0;function loop(ts){acc+=Math.min(100,ts-(last||ts));last=ts;while(acc>=16.667){acc-=16.667;update()}draw();requestAnimationFrame(loop)}
 
 /* ---------- 输入 ---------- */
 const DK={ArrowUp:0,w:0,W:0,ArrowRight:1,d:1,D:1,ArrowDown:2,s:2,S:2,ArrowLeft:3,a:3,A:3};
 const dirDown=d=>{hd=hd.filter(x=>x!=d);hd.push(d)},dirUp=d=>{hd=hd.filter(x=>x!=d)};
 function pause(){if(st=='play')st='pause';else if(st=='pause')st='play'}
-addEventListener('keydown',e=>{const k=e.key;
+addEventListener('keydown',e=>{const k=e.key;if(st=='edit'){editKey(k,e);return}if(st=='title'&&(k=='e'||k=='E')){openEdit();return}if(st=='title'&&(k=='c'||k=='C')){playCustom();return}
  if(k in DK){e.preventDefault();if(!e.repeat)dirDown(DK[k])}
  else if(k==' '||k=='j'||k=='J'||k=='z'||k=='Z'){e.preventDefault();fireHeld=true;if(st=='title'||st=='over')newGame()}
  else if(k=='Enter'){if(st=='title'||st=='over')newGame()}
@@ -135,8 +165,10 @@ addEventListener('keydown',e=>{const k=e.key;
 addEventListener('keyup',e=>{const k=e.key;if(k in DK)dirUp(DK[k]);else if(k==' '||k=='j'||k=='J'||k=='z'||k=='Z')fireHeld=false});
 document.querySelectorAll('#pad [data-d]').forEach(b=>{const d=+b.dataset.d;b.addEventListener('pointerdown',e=>{e.preventDefault();dirDown(d)});for(const ev of['pointerup','pointerleave','pointercancel'])b.addEventListener(ev,()=>dirUp(d))});
 const fb=document.getElementById('fb');fb.addEventListener('pointerdown',e=>{e.preventDefault();fireHeld=true;if(st=='title'||st=='over')newGame()});for(const ev of['pointerup','pointerleave','pointercancel'])fb.addEventListener(ev,()=>fireHeld=false);
-cv.addEventListener('pointerdown',()=>{if(st=='title'||st=='over')newGame();else if(st=='pause')pause()});
+cv.addEventListener('pointerdown',e=>{if(st=='edit'){painting=1;paint(e,e.button==2)}else if(st=='title'||st=='over')newGame();else if(st=='pause')pause()});
+cv.addEventListener('pointermove',e=>{if(painting&&st=='edit')paint(e,e.buttons==2)});addEventListener('pointerup',()=>painting=0);cv.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('click',e=>{if(e.target.tagName=='BUTTON')e.target.blur()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&st=='play')st='pause'});
 grid=new Uint8Array(676);tanks=[];bullets=[];ups=[];parts=[];queue=[];
-requestAnimationFrame(loop);
+ui();requestAnimationFrame(loop);
 </script></body></html>
